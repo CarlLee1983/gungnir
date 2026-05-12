@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+gungnir_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+src="$gungnir_root/skills/ci-toolkit"
+dst_dir="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+dst="$dst_dir/ci-toolkit"
+
+# Defensive: src is the script's own sibling so this should always exist.
+# Kept as a guard for unusual usage (script copied elsewhere) — not exercised
+# by tests in MVP.
+if [[ ! -d "$src" ]]; then
+  echo "missing $src" >&2
+  exit 1
+fi
+
+mkdir -p "$dst_dir"
+ln -s "$src" "$dst"
+echo "linked $dst -> $src"
