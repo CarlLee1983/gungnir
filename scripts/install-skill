@@ -25,5 +25,10 @@ if [[ -L "$dst" ]]; then
   fi
 fi
 
+if [[ -e "$dst" ]]; then
+  echo "non-symlink path at $dst; aborting" >&2
+  exit 1
+fi
+
 ln -s "$src" "$dst"
 echo "linked $dst -> $src"
