@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+rc::version() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local changelog_file="${2:-$ROOT_DIR/CHANGELOG.md}"
+
+  local constant
+  constant="$(grep -E '^CI_TOOLKIT_VERSION=' "$target_file" \
+    | head -1 \
+    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/')"
+
+  local latest
+  latest="$(grep -E '^## v' "$changelog_file" \
+    | head -1 \
+    | sed -E 's/^## v([^ ]+).*/\1/')"
+
+  if [[ -z "$constant" || -z "$latest" ]]; then
+    printf 'version: could not parse versions (constant=%s, changelog=%s)\n' \
+      "$constant" "$latest" >&2
+    return 1
+  fi
+
+  if [[ "$constant" != "$latest" ]]; then
+    printf 'version: CI_TOOLKIT_VERSION=%s does not match CHANGELOG v%s\n' \
+      "$constant" "$latest" >&2
+    return 1
+  fi
+
+  printf 'version: ok (%s)\n' "$constant"
+}
+
+main() {
+  local subcommand="${1:-all}"
+  if [[ "$#" -gt 0 ]]; then
+    shift
+  fi
+
+  case "$subcommand" in
+    version)
+      rc::version "$@"
+      ;;
+    *)
+      printf 'usage: release-check [version]\n' >&2
+      return 64
+      ;;
+  esac
+}
+
+main "$@"
