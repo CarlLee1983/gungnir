@@ -62,8 +62,9 @@ rc::boundary() {
 
 rc::copy_smoke() {
   local target_file="${1:-$ROOT_DIR/ci-toolkit}"
-  local tmpdir
+  local tmpdir=""
   tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir:-}"' RETURN
 
   cp "$target_file" "$tmpdir/ci-toolkit"
   chmod +x "$tmpdir/ci-toolkit"
@@ -72,11 +73,9 @@ rc::copy_smoke() {
   (
     cd "$tmpdir"
     ./ci-toolkit help >/dev/null
-    ./ci-toolkit version | grep -q 'ci-toolkit'
-    bash -c "source './ci-toolkit' && ci::info 'ok'" >/dev/null
+    ./ci-toolkit version | grep -q '^ci-toolkit '
+    bash -c "source './ci-toolkit' && ci::info 'ok'" >/dev/null 2>/dev/null
   ) || rc=$?
-
-  rm -rf "$tmpdir"
 
   if [[ "$rc" -ne 0 ]]; then
     printf 'copy-smoke: standalone artifact failed (rc=%s)\n' "$rc" >&2
