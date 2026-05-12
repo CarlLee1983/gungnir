@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# ci-toolkit: experimental platform-neutral helpers for CI Bash scripts.
+# Usage as CLI:    ./ci-toolkit help
+# Usage as source: source ./ci-toolkit && ci::info "message"
+# Runtime: Bash 4+
+
+CI_TOOLKIT_VERSION="0.1.0-experimental"
+CI_TOOLKIT_NAME="ci-toolkit"
+
+ci::log() {
+  local level="$1"
+  shift || true
+  local message="$*"
+
+  if [[ "$level" == "debug" && "${CI_TOOLKIT_DEBUG:-}" != "1" ]]; then
+    return 0
+  fi
+
+  printf '[%s] %s\n' "$level" "$message" >&2
+}
+
+ci::info() {
+  ci::log info "$@"
+}
+
+ci::warn() {
+  ci::log warn "$@"
+}
+
+ci::error() {
+  ci::log error "$@"
+}
+
+ci::debug() {
+  ci::log debug "$@"
+}
+
+ci::die() {
+  ci::error "$*"
+  return 1
+}
+
+ci::usage() {
+  cat <<'USAGE'
+ci-toolkit - Experimental platform-neutral CI Bash toolkit
+
+Usage:
+  ci-toolkit help
+  ci-toolkit version
+  ci-toolkit log <info|warn|error|debug> <message>
+
+Source mode:
+  source ./ci-toolkit
+  ci::info "message"
+
+Experimental: CLI and source APIs may change before stabilization.
+USAGE
+}
+
+ci::cmd_help() {
+  ci::usage
+}
+
+ci::cmd_version() {
+  printf 'ci-toolkit %s\n' "$CI_TOOLKIT_VERSION"
+}
+
+ci::cmd_log() {
+  local level="${1:-}"
+  shift || true
+
+  case "$level" in
+    info|warn|error|debug)
+      ci::log "$level" "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::dispatch() {
+  local command="${1:-help}"
+  if [[ "$#" -gt 0 ]]; then
+    shift
+  fi
+
+  case "$command" in
+    help|-h|--help)
+      ci::cmd_help "$@"
+      ;;
+    version|--version)
+      ci::cmd_version "$@"
+      ;;
+    log)
+      ci::cmd_log "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  ci::dispatch "$@"
+  exit $?
+fi
