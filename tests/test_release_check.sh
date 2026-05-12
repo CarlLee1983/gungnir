@@ -75,6 +75,8 @@ run_capture "$RELEASE_CHECK" boundary "$vendor_tmp/ci-toolkit"
 assert_status 1 "$RUN_STATUS" "release-check boundary: vendor marker exits non-zero"
 assert_contains "$RUN_STDERR" "CI-vendor markers found" \
   "release-check boundary: explains vendor markers on stderr"
+assert_not_contains "$RUN_STDOUT" "boundary: ok" \
+  "release-check boundary: vendor marker does not print ok to stdout"
 
 # boundary subcommand: synthetic artifact with a forbidden dispatch command must fail.
 cmd_tmp="$(make_temp_dir)"
@@ -90,5 +92,7 @@ run_capture "$RELEASE_CHECK" boundary "$cmd_tmp/ci-toolkit"
 assert_status 1 "$RUN_STATUS" "release-check boundary: forbidden command exits non-zero"
 assert_contains "$RUN_STDERR" "forbidden public command names" \
   "release-check boundary: explains forbidden command on stderr"
+assert_not_contains "$RUN_STDOUT" "boundary: ok" \
+  "release-check boundary: forbidden command does not print ok to stdout"
 
 finish_tests
