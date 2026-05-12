@@ -46,4 +46,18 @@ run_capture "$RELEASE_CHECK" version "$tmp_root/ci-toolkit" "$tmp_root/CHANGELOG
 assert_status 1 "$RUN_STATUS" "release-check version: mismatch exits non-zero"
 assert_contains "$RUN_STDERR" "does not match" "release-check version: explains mismatch on stderr"
 
+# version subcommand: empty ci-toolkit fixture must surface a parse error.
+parse_tmp="$(make_temp_dir)"
+: >"$parse_tmp/ci-toolkit"
+cat >"$parse_tmp/CHANGELOG.md" <<'EOF'
+# Changelog
+
+## v0.1.0 - Experimental initial release
+EOF
+
+run_capture "$RELEASE_CHECK" version "$parse_tmp/ci-toolkit" "$parse_tmp/CHANGELOG.md"
+assert_status 1 "$RUN_STATUS" "release-check version: unparseable artifact exits non-zero"
+assert_contains "$RUN_STDERR" "could not parse" \
+  "release-check version: explains parse failure on stderr"
+
 finish_tests
