@@ -76,6 +76,26 @@ See [`examples/bun-deploy/README.md`](examples/bun-deploy/README.md) for layout,
 
 A second example, [`examples/vendored-deploy-script/`](examples/vendored-deploy-script/), is a code-reference refactor of a real ~400-line production deploy script (git-pull → build → multi-host rsync → Slack). It shows how to retrofit `ci-toolkit` into an existing script without restructuring it: which helpers to delete, which lines to substitute, and which domain logic to leave alone.
 
+## Use with Claude Code
+
+Gungnir ships a Claude Code skill (`skills/ci-toolkit/`) so AI coding agents
+recognize when to reach for `ci-toolkit` while writing or refactoring CI / build
+/ deploy scripts.
+
+Install it once on your machine:
+
+    scripts/install-skill
+
+This creates a symlink at `~/.claude/skills/ci-toolkit`. Upgrade by `git pull`
+on the Gungnir clone — the skill content is read live through the symlink.
+
+To install into a non-default skills directory, set `CLAUDE_SKILLS_DIR`:
+
+    CLAUDE_SKILLS_DIR=/custom/path scripts/install-skill
+
+The installer is idempotent and refuses to overwrite an existing file or
+mismatching symlink at the destination.
+
 ## CLI reference
 
 | Command | Behavior |
