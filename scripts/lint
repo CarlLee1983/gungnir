@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! command -v shellcheck >/dev/null 2>&1; then
+  printf 'shellcheck not found; skipping lint. Install shellcheck for full validation.\n' >&2
+  exit 0
+fi
+
+shellcheck \
+  "$ROOT_DIR/ci-toolkit" \
+  "$ROOT_DIR"/scripts/test \
+  "$ROOT_DIR"/scripts/lint \
+  "$ROOT_DIR"/scripts/smoke \
+  "$ROOT_DIR"/tests/assert.sh \
+  "$ROOT_DIR"/tests/test_*.sh

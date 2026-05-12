@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+"$ROOT_DIR/ci-toolkit" help >/dev/null
+"$ROOT_DIR/ci-toolkit" version | grep -q 'ci-toolkit'
+bash -c "source '$ROOT_DIR/ci-toolkit' && ci::info 'ok'" >/dev/null
+
+printf 'Smoke checks passed\n'
