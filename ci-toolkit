@@ -4,7 +4,7 @@
 # Usage as source: source ./ci-toolkit && ci::info "message"
 # Runtime: Bash 4+
 
-CI_TOOLKIT_VERSION="0.1.0-experimental"
+CI_TOOLKIT_VERSION="0.1.0"
 CI_TOOLKIT_NAME="ci-toolkit"
 
 ci::log() {
