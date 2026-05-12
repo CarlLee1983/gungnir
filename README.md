@@ -193,6 +193,22 @@ Follow the file's section flow:
 4. **Usage** — update `ci::usage` so `ci-toolkit help` lists the new command.
 5. **Tests** — add a `tests/test_*.sh` that exercises both source mode (`source ci-toolkit; ci::your_feature`) and CLI mode (`./ci-toolkit your-feature`). Write the failing test first, then implement.
 
+## Release readiness
+
+`scripts/release-check` runs the verification pass used before tagging a
+release. It exposes individual checks plus an aggregate pipeline:
+
+```bash
+./scripts/release-check version      # CI_TOOLKIT_VERSION vs CHANGELOG.md
+./scripts/release-check boundary     # platform-neutral guardrails
+./scripts/release-check copy-smoke   # standalone single-file distribution
+./scripts/release-check gates        # tests, lint, smoke
+./scripts/release-check all          # everything above
+```
+
+The most recent release-readiness record lives under
+`docs/superpowers/release-readiness/`.
+
 ## Project layout
 
 ```
