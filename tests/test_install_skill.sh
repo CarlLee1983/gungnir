@@ -51,4 +51,16 @@ assert_contains "$RUN_STDERR" "aborting" "regular-file conflict: stderr mentions
 assert_eq "$original_content" "$(cat "$skills_dir3/ci-toolkit")" \
   "regular-file conflict: existing file untouched"
 
+# Case 4: Refuses to overwrite a symlink pointing elsewhere
+skills_dir4="$(make_temp_dir)"
+other_target="$(make_temp_dir)"
+ln -s "$other_target" "$skills_dir4/ci-toolkit"
+CLAUDE_SKILLS_DIR="$skills_dir4" run_capture "$ROOT_DIR/scripts/install-skill"
+[[ "$RUN_STATUS" -ne 0 ]] && pass "wrong-symlink conflict: non-zero exit" \
+  || fail "wrong-symlink conflict: expected non-zero exit, got 0"
+assert_contains "$RUN_STDERR" "different symlink exists" \
+  "wrong-symlink conflict: stderr mentions different symlink"
+assert_eq "$other_target" "$(readlink "$skills_dir4/ci-toolkit")" \
+  "wrong-symlink conflict: original symlink unchanged"
+
 finish_tests
