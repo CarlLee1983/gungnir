@@ -40,4 +40,15 @@ assert_contains "$RUN_STDOUT" "already linked" "idempotent: stdout says already 
 assert_eq "$ROOT_DIR/skills/ci-toolkit" "$(readlink "$skills_dir2/ci-toolkit")" \
   "idempotent: symlink target unchanged"
 
+# Case 3: Refuses to overwrite a regular file at the destination
+skills_dir3="$(make_temp_dir)"
+printf 'unrelated content\n' >"$skills_dir3/ci-toolkit"
+original_content="$(cat "$skills_dir3/ci-toolkit")"
+CLAUDE_SKILLS_DIR="$skills_dir3" run_capture "$ROOT_DIR/scripts/install-skill"
+[[ "$RUN_STATUS" -ne 0 ]] && pass "regular-file conflict: non-zero exit" \
+  || fail "regular-file conflict: expected non-zero exit, got 0"
+assert_contains "$RUN_STDERR" "aborting" "regular-file conflict: stderr mentions aborting"
+assert_eq "$original_content" "$(cat "$skills_dir3/ci-toolkit")" \
+  "regular-file conflict: existing file untouched"
+
 finish_tests
