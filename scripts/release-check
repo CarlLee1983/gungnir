@@ -11,12 +11,14 @@ rc::version() {
   local constant
   constant="$(grep -E '^CI_TOOLKIT_VERSION=' "$target_file" \
     | head -1 \
-    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/')"
+    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/' \
+    || true)"
 
   local latest
   latest="$(grep -E '^## v' "$changelog_file" \
     | head -1 \
-    | sed -E 's/^## v([^ ]+).*/\1/')"
+    | sed -E 's/^## v([^ ]+).*/\1/' \
+    || true)"
 
   if [[ -z "$constant" || -z "$latest" ]]; then
     printf 'version: could not parse versions (constant=%s, changelog=%s)\n' \
