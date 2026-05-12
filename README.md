@@ -1,10 +1,22 @@
 # Gungnir CI Toolkit
 
-Experimental platform-neutral Bash helpers for CI scripts.
+Experimental, platform-neutral Bash helpers for CI scripts. A single file (`ci-toolkit`) that doubles as a CLI and as a sourceable `ci::` function library.
 
-## Status
+> **Status:** experimental. CLI flags and `ci::` source APIs may change before stabilization. Pin a release tag in CI; do not track `main`.
 
-This project is experimental. CLI commands and `ci::` source APIs may change before stabilization. Pin a release tag in CI instead of tracking `main`.
+## Why
+
+CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lookups. Gungnir bundles a minimal set of those primitives with three properties:
+
+- **One file, no build.** Distributed by URL; install with `curl` + `chmod +x`.
+- **Two usage modes.** Run it as a CLI, or `source` it and call `ci::` functions directly.
+- **Platform-neutral.** No GitHub Actions / GitLab / CircleCI assumptions, no `build` / `deploy` abstractions, no vendor environment variables.
+
+## Requirements
+
+- Bash 4+ (macOS default `/bin/bash` is 3.2 — install via `brew install bash`).
+- POSIX `coreutils` (already present on Linux and macOS).
+- Optional: `shellcheck` for `./scripts/lint`.
 
 ## Install in CI
 
@@ -14,7 +26,11 @@ chmod +x ci-toolkit
 ./ci-toolkit version
 ```
 
-## CLI usage
+Pin to a tag (`v0.1.0` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
+
+## Quickstart
+
+### CLI mode
 
 ```bash
 ./ci-toolkit help
@@ -25,7 +41,7 @@ chmod +x ci-toolkit
 ./ci-toolkit retry -- make test
 ```
 
-## Source API usage
+### Source mode
 
 ```bash
 source ./ci-toolkit
@@ -36,19 +52,158 @@ ci::require_tool git
 ci::retry 3 make test
 ```
 
-## Runtime boundary
+Source mode keeps control of the caller's shell: helpers return status codes and never call `exit`.
 
-- Bash 4+ is required.
-- Core behavior is platform-neutral and does not depend on a specific CI vendor.
-- Optional external tools must be checked with `ci::require_tool` before use.
-- Secret values must not be printed by validation helpers.
+## Examples
 
-## Development checks
+A worked example lives at [`examples/bun-deploy/`](examples/bun-deploy/) — a tiny Bun project with `check / build / deploy / release` scripts that compose `ci-toolkit` primitives. The deploy script defaults to a dry-run so you can run the whole pipeline without contacting a registry.
 
 ```bash
-./scripts/test
-./scripts/lint
-./scripts/smoke
+cd examples/bun-deploy
+
+# build only (no env required)
+RUN_DEPLOY=0 ./scripts/check
+./scripts/build
+
+# dry-run deploy (no real network calls)
+IMAGE_TAG="$(date +%s)" \
+REGISTRY_URL="ghcr.io/example" \
+REGISTRY_TOKEN="dummy" \
+./scripts/deploy
 ```
 
-`scripts/lint` uses ShellCheck when installed and exits zero with a clear skip message when ShellCheck is unavailable.
+See [`examples/bun-deploy/README.md`](examples/bun-deploy/README.md) for layout, environment variables, and how to swap the deploy target (Cloudflare Workers, SSH/rsync, S3 …).
+
+## CLI reference
+
+| Command | Behavior |
+| --- | --- |
+| `help`, `-h`, `--help` | Print usage and exit `0`. |
+| `version`, `--version` | Print `ci-toolkit <version>` to stdout. |
+| `log <info\|warn\|error\|debug> <message>` | Write a structured log line to **stderr**. `debug` is silent unless `CI_TOOLKIT_DEBUG=1`. |
+| `env require VAR_NAME` | Exit `1` if the environment variable is unset or empty. The variable's value is never printed. |
+| `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
+| `retry -- COMMAND [ARGS...]` | Run `COMMAND` up to 3 times until it returns `0`. Returns the last attempt's exit status. |
+
+Unknown commands or malformed arguments exit `64` and print usage to stderr.
+
+## Source API reference
+
+All functions live under the `ci::` namespace and return status codes; none of them call `exit`.
+
+### Logging
+
+| Function | Description |
+| --- | --- |
+| `ci::log LEVEL MESSAGE...` | Emit `[LEVEL] MESSAGE` to **stderr**. `LEVEL=debug` is suppressed unless `CI_TOOLKIT_DEBUG=1`. |
+| `ci::info MESSAGE...` | Shortcut for `ci::log info`. |
+| `ci::warn MESSAGE...` | Shortcut for `ci::log warn`. |
+| `ci::error MESSAGE...` | Shortcut for `ci::log error`. |
+| `ci::debug MESSAGE...` | Shortcut for `ci::log debug`. |
+| `ci::die MESSAGE...` | Log at `error` and return `1`. The caller decides whether to `exit`. |
+
+### Validation
+
+| Function | Description |
+| --- | --- |
+| `ci::require_env VAR_NAME` | Return `1` if `VAR_NAME` is unset or empty. The value is never printed; only the name appears in the error message. |
+| `ci::require_tool TOOL_NAME` | Return `1` if `TOOL_NAME` is not resolvable via `command -v`. |
+
+### Flow control
+
+| Function | Description |
+| --- | --- |
+| `ci::retry ATTEMPTS COMMAND...` | Run `COMMAND` up to `ATTEMPTS` times. Returns `0` on first success, otherwise returns the final attempt's exit status. Failed attempts log a `warn` line. |
+
+### Paths
+
+| Function | Description |
+| --- | --- |
+| `ci::find_up MARKER` | Walk up from `$PWD` toward `/` looking for an entry named `MARKER`. Print the matching directory to **stdout** on success, return `1` if no match. |
+| `ci::root` | Equivalent to `ci::find_up .git`. |
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success. |
+| `1` | A check failed (missing env / missing tool / retries exhausted / marker not found). |
+| `64` | Usage error (unknown subcommand or malformed arguments). Modelled after `sysexits.h` `EX_USAGE`. |
+
+## Environment variables
+
+| Variable | Effect |
+| --- | --- |
+| `CI_TOOLKIT_DEBUG=1` | Enable `debug`-level log output on stderr. Default: off. |
+
+## Conventions
+
+These conventions are part of the toolkit's contract — preserve them when contributing.
+
+- **stderr for logs, stdout for data.** `ci::log` writes to stderr. Helpers that return a value (such as `ci::find_up`) write that value to stdout so it can be captured by `$(...)` without log noise.
+- **Status codes, not `exit`.** Source-mode callers stay in control of their shell. Functions return; they do not terminate the parent process.
+- **No secret leakage.** Validation helpers report variable **names**, never values. Tests assert that secret values do not appear in stderr.
+- **Platform-neutral.** No CI vendor variables (`GITHUB_*`, `GITLAB_*`, `CIRCLE_*`) and no `build` / `deploy` command abstractions. CI workflows compose the toolkit; the toolkit does not encode workflow opinions.
+
+## Development
+
+```bash
+./scripts/test     # run all Bash behavior tests
+./scripts/lint     # ShellCheck if installed; skips with a clear notice otherwise
+./scripts/smoke    # exercise CLI + source mode against the real artifact
+```
+
+Run a single test file directly:
+
+```bash
+bash tests/test_retry_and_paths.sh
+```
+
+`scripts/test` is a thin loop over `tests/test_*.sh` and stops at the first failure because `set -euo pipefail` is on.
+
+### Adding a feature
+
+Follow the file's section flow:
+
+1. **Library function** — add `ci::your_feature` in the library section. Return status codes; do not `exit`.
+2. **Command wrapper** — add `ci::cmd_your_feature` that adapts argv, returning `64` on usage errors.
+3. **Dispatch arm** — register the command in `ci::dispatch`'s `case` statement.
+4. **Usage** — update `ci::usage` so `ci-toolkit help` lists the new command.
+5. **Tests** — add a `tests/test_*.sh` that exercises both source mode (`source ci-toolkit; ci::your_feature`) and CLI mode (`./ci-toolkit your-feature`). Write the failing test first, then implement.
+
+## Project layout
+
+```
+.
+├── ci-toolkit              # the artifact (CLI + sourceable library)
+├── scripts/
+│   ├── test                # runs every tests/test_*.sh
+│   ├── lint                # optional ShellCheck pass
+│   └── smoke               # end-to-end CLI + source smoke checks
+├── tests/
+│   ├── assert.sh           # shared assertion helpers
+│   └── test_*.sh           # behavior tests per feature group
+├── docs/
+│   └── superpowers/
+│       ├── specs/          # design contracts
+│       └── plans/          # executed implementation plans
+├── examples/
+│   └── bun-deploy/         # worked example: Bun build + dry-run docker deploy
+├── AGENTS.md               # guidance for AI coding agents
+├── CLAUDE.md               # imports AGENTS.md for Claude Code
+├── CHANGELOG.md            # source of truth for release notes
+└── README.md               # this file
+```
+
+## Versioning
+
+- `CHANGELOG.md` is the source of truth for release notes.
+- The `CI_TOOLKIT_VERSION` constant at the top of `ci-toolkit` must match the latest `CHANGELOG.md` entry.
+- While the project is experimental, breaking changes can land in minor releases. Pin to an exact tag in CI.
+
+## References
+
+- Design contract: `docs/superpowers/specs/2026-05-12-ci-bash-toolkit-design.md`
+- Executed plan: `docs/superpowers/plans/2026-05-12-ci-bash-toolkit.md`
+- Agent guidance: `AGENTS.md`
+- Release notes: `CHANGELOG.md`
