@@ -74,6 +74,8 @@ REGISTRY_TOKEN="dummy" \
 
 See [`examples/bun-deploy/README.md`](examples/bun-deploy/README.md) for layout, environment variables, and how to swap the deploy target (Cloudflare Workers, SSH/rsync, S3 …).
 
+A second example, [`examples/vendored-deploy-script/`](examples/vendored-deploy-script/), is a code-reference refactor of a real ~400-line production deploy script (git-pull → build → multi-host rsync → Slack). It shows how to retrofit `ci-toolkit` into an existing script without restructuring it: which helpers to delete, which lines to substitute, and which domain logic to leave alone.
+
 ## CLI reference
 
 | Command | Behavior |
@@ -188,7 +190,8 @@ Follow the file's section flow:
 │       ├── specs/          # design contracts
 │       └── plans/          # executed implementation plans
 ├── examples/
-│   └── bun-deploy/         # worked example: Bun build + dry-run docker deploy
+│   ├── bun-deploy/             # runnable example: Bun build + dry-run docker deploy
+│   └── vendored-deploy-script/ # code-reference: retrofit ci-toolkit into a vendored deploy script
 ├── AGENTS.md               # guidance for AI coding agents
 ├── CLAUDE.md               # imports AGENTS.md for Claude Code
 ├── CHANGELOG.md            # source of truth for release notes
