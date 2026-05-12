@@ -99,5 +99,22 @@ assert_not_contains "$RUN_STDOUT" "boundary: ok" \
 run_capture "$RELEASE_CHECK" copy-smoke
 assert_status 0 "$RUN_STATUS" "release-check copy-smoke: standalone artifact exits zero"
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check copy-smoke: prints ok line"
+assert_eq "" "$RUN_STDERR" "release-check copy-smoke: no stderr on success"
+
+# copy-smoke subcommand: broken artifact must fail with a clear error.
+broken_tmp="$(make_temp_dir)"
+cat >"$broken_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+echo "broken artifact"
+exit 1
+EOF
+chmod +x "$broken_tmp/ci-toolkit"
+
+run_capture "$RELEASE_CHECK" copy-smoke "$broken_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" "release-check copy-smoke: broken artifact exits non-zero"
+assert_contains "$RUN_STDERR" "standalone artifact failed" \
+  "release-check copy-smoke: explains failure on stderr"
+assert_not_contains "$RUN_STDOUT" "copy-smoke: ok" \
+  "release-check copy-smoke: broken artifact does not print ok to stdout"
 
 finish_tests
