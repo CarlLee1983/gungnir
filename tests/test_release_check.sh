@@ -60,4 +60,35 @@ assert_status 1 "$RUN_STATUS" "release-check version: unparseable artifact exits
 assert_contains "$RUN_STDERR" "could not parse" \
   "release-check version: explains parse failure on stderr"
 
+# boundary subcommand: real artifact has no vendor markers and no forbidden commands.
+run_capture "$RELEASE_CHECK" boundary
+assert_status 0 "$RUN_STATUS" "release-check boundary: clean artifact exits zero"
+assert_contains "$RUN_STDOUT" "boundary: ok" "release-check boundary: prints ok line"
+
+# boundary subcommand: synthetic artifact with vendor markers must fail.
+vendor_tmp="$(make_temp_dir)"
+cat >"$vendor_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+echo "GITHUB_TOKEN is sensitive"
+EOF
+run_capture "$RELEASE_CHECK" boundary "$vendor_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" "release-check boundary: vendor marker exits non-zero"
+assert_contains "$RUN_STDERR" "CI-vendor markers found" \
+  "release-check boundary: explains vendor markers on stderr"
+
+# boundary subcommand: synthetic artifact with a forbidden dispatch command must fail.
+cmd_tmp="$(make_temp_dir)"
+cat >"$cmd_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+    build)
+      echo "running build"
+      ;;
+esac
+EOF
+run_capture "$RELEASE_CHECK" boundary "$cmd_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" "release-check boundary: forbidden command exits non-zero"
+assert_contains "$RUN_STDERR" "forbidden public command names" \
+  "release-check boundary: explains forbidden command on stderr"
+
 finish_tests
