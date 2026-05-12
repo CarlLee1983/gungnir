@@ -16,5 +16,14 @@ if [[ ! -d "$src" ]]; then
 fi
 
 mkdir -p "$dst_dir"
+
+if [[ -L "$dst" ]]; then
+  current="$(readlink "$dst")"
+  if [[ "$current" == "$src" ]]; then
+    echo "already linked $dst -> $current"
+    exit 0
+  fi
+fi
+
 ln -s "$src" "$dst"
 echo "linked $dst -> $src"

@@ -31,4 +31,13 @@ assert_eq "$ROOT_DIR/skills/ci-toolkit" "$(readlink "$skills_dir/ci-toolkit")" \
   "happy path: symlink target equals skills/ci-toolkit"
 assert_contains "$RUN_STDOUT" "linked" "happy path: stdout reports linked"
 
+# Case 2: Idempotent — running twice is a no-op
+skills_dir2="$(make_temp_dir)"
+CLAUDE_SKILLS_DIR="$skills_dir2" "$ROOT_DIR/scripts/install-skill" >/dev/null
+CLAUDE_SKILLS_DIR="$skills_dir2" run_capture "$ROOT_DIR/scripts/install-skill"
+assert_status 0 "$RUN_STATUS" "idempotent: second run exits 0"
+assert_contains "$RUN_STDOUT" "already linked" "idempotent: stdout says already linked"
+assert_eq "$ROOT_DIR/skills/ci-toolkit" "$(readlink "$skills_dir2/ci-toolkit")" \
+  "idempotent: symlink target unchanged"
+
 finish_tests
