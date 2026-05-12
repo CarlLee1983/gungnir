@@ -72,6 +72,63 @@ ci::require_tool() {
   return 0
 }
 
+ci::retry() {
+  local attempts="${1:-}"
+  shift || true
+
+  if [[ -z "$attempts" || ! "$attempts" =~ ^[0-9]+$ || "$attempts" -lt 1 ]]; then
+    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    return 64
+  fi
+
+  if [[ "$#" -eq 0 ]]; then
+    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    return 64
+  fi
+
+  local attempt status
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    set +e
+    "$@"
+    status=$?
+    set -e
+
+    if [[ "$status" -eq 0 ]]; then
+      return 0
+    fi
+
+    ci::warn "Attempt $attempt/$attempts failed with status $status: $*"
+  done
+
+  return "$status"
+}
+
+ci::find_up() {
+  local marker="${1:-}"
+  local dir
+
+  if [[ -z "$marker" ]]; then
+    ci::error "Usage: ci::find_up MARKER"
+    return 64
+  fi
+
+  dir="$(pwd)"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -e "$dir/$marker" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  ci::error "Could not find marker: $marker"
+  return 1
+}
+
+ci::root() {
+  ci::find_up .git
+}
+
 ci::usage() {
   cat <<'USAGE'
 ci-toolkit - Experimental platform-neutral CI Bash toolkit
@@ -82,6 +139,7 @@ Usage:
   ci-toolkit log <info|warn|error|debug> <message>
   ci-toolkit env require VAR_NAME
   ci-toolkit tool require TOOL_NAME
+  ci-toolkit retry -- COMMAND [ARGS...]
 
 Source mode:
   source ./ci-toolkit
@@ -144,6 +202,16 @@ ci::cmd_tool() {
   esac
 }
 
+ci::cmd_retry() {
+  if [[ "${1:-}" != "--" ]]; then
+    ci::usage >&2
+    return 64
+  fi
+  shift
+
+  ci::retry 3 "$@"
+}
+
 ci::dispatch() {
   local command="${1:-help}"
   if [[ "$#" -gt 0 ]]; then
@@ -165,6 +233,9 @@ ci::dispatch() {
       ;;
     tool)
       ci::cmd_tool "$@"
+      ;;
+    retry)
+      ci::cmd_retry "$@"
       ;;
     *)
       ci::usage >&2
