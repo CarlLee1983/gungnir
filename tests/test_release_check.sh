@@ -95,4 +95,9 @@ assert_contains "$RUN_STDERR" "forbidden public command names" \
 assert_not_contains "$RUN_STDOUT" "boundary: ok" \
   "release-check boundary: forbidden command does not print ok to stdout"
 
+# copy-smoke subcommand: real artifact copied into a temp dir must work standalone.
+run_capture "$RELEASE_CHECK" copy-smoke
+assert_status 0 "$RUN_STATUS" "release-check copy-smoke: standalone artifact exits zero"
+assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check copy-smoke: prints ok line"
+
 finish_tests

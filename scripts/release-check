@@ -60,6 +60,32 @@ rc::boundary() {
   printf 'boundary: ok\n'
 }
 
+rc::copy_smoke() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+
+  cp "$target_file" "$tmpdir/ci-toolkit"
+  chmod +x "$tmpdir/ci-toolkit"
+
+  local rc=0
+  (
+    cd "$tmpdir"
+    ./ci-toolkit help >/dev/null
+    ./ci-toolkit version | grep -q 'ci-toolkit'
+    bash -c "source './ci-toolkit' && ci::info 'ok'" >/dev/null
+  ) || rc=$?
+
+  rm -rf "$tmpdir"
+
+  if [[ "$rc" -ne 0 ]]; then
+    printf 'copy-smoke: standalone artifact failed (rc=%s)\n' "$rc" >&2
+    return 1
+  fi
+
+  printf 'copy-smoke: ok\n'
+}
+
 main() {
   local subcommand="${1:-all}"
   if [[ "$#" -gt 0 ]]; then
@@ -73,8 +99,11 @@ main() {
     boundary)
       rc::boundary "$@"
       ;;
+    copy-smoke)
+      rc::copy_smoke "$@"
+      ;;
     *)
-      printf 'usage: release-check [version|boundary]\n' >&2
+      printf 'usage: release-check [version|boundary|copy-smoke]\n' >&2
       return 64
       ;;
   esac
