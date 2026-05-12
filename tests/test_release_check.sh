@@ -117,4 +117,13 @@ assert_contains "$RUN_STDERR" "standalone artifact failed" \
 assert_not_contains "$RUN_STDOUT" "copy-smoke: ok" \
   "release-check copy-smoke: broken artifact does not print ok to stdout"
 
+# all subcommand: end-to-end pipeline must exit zero on a clean repo.
+run_capture "$RELEASE_CHECK" all
+assert_status 0 "$RUN_STATUS" "release-check all: clean repo exits zero"
+assert_contains "$RUN_STDOUT" "version: ok" "release-check all: ran version check"
+assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary check"
+assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
+assert_contains "$RUN_STDOUT" "release-check: all checks passed" \
+  "release-check all: prints final summary"
+
 finish_tests
