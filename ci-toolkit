@@ -40,6 +40,38 @@ ci::die() {
   return 1
 }
 
+ci::require_env() {
+  local name="${1:-}"
+
+  if [[ -z "$name" ]]; then
+    ci::error "Usage: ci::require_env VAR_NAME"
+    return 64
+  fi
+
+  if [[ -z "${!name+x}" || -z "${!name}" ]]; then
+    ci::error "Missing required environment variable: $name"
+    return 1
+  fi
+
+  return 0
+}
+
+ci::require_tool() {
+  local name="${1:-}"
+
+  if [[ -z "$name" ]]; then
+    ci::error "Usage: ci::require_tool TOOL_NAME"
+    return 64
+  fi
+
+  if ! command -v "$name" >/dev/null 2>&1; then
+    ci::error "Missing required tool: $name"
+    return 1
+  fi
+
+  return 0
+}
+
 ci::usage() {
   cat <<'USAGE'
 ci-toolkit - Experimental platform-neutral CI Bash toolkit
@@ -48,6 +80,8 @@ Usage:
   ci-toolkit help
   ci-toolkit version
   ci-toolkit log <info|warn|error|debug> <message>
+  ci-toolkit env require VAR_NAME
+  ci-toolkit tool require TOOL_NAME
 
 Source mode:
   source ./ci-toolkit
@@ -80,6 +114,36 @@ ci::cmd_log() {
   esac
 }
 
+ci::cmd_env() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      ci::require_env "${1:-}"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_tool() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      ci::require_tool "${1:-}"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
 ci::dispatch() {
   local command="${1:-help}"
   if [[ "$#" -gt 0 ]]; then
@@ -95,6 +159,12 @@ ci::dispatch() {
       ;;
     log)
       ci::cmd_log "$@"
+      ;;
+    env)
+      ci::cmd_env "$@"
+      ;;
+    tool)
+      ci::cmd_tool "$@"
       ;;
     *)
       ci::usage >&2
