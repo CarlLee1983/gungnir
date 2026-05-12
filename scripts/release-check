@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+rc::version() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local changelog_file="${2:-$ROOT_DIR/CHANGELOG.md}"
+
+  local constant
+  constant="$(grep -E '^CI_TOOLKIT_VERSION=' "$target_file" \
+    | head -1 \
+    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/' \
+    || true)"
+
+  local latest
+  latest="$(grep -E '^## v' "$changelog_file" \
+    | head -1 \
+    | sed -E 's/^## v([^ ]+).*/\1/' \
+    || true)"
+
+  if [[ -z "$constant" || -z "$latest" ]]; then
+    printf 'version: could not parse versions (constant=%s, changelog=%s)\n' \
+      "$constant" "$latest" >&2
+    return 1
+  fi
+
+  if [[ "$constant" != "$latest" ]]; then
+    printf 'version: CI_TOOLKIT_VERSION=%s does not match CHANGELOG v%s\n' \
+      "$constant" "$latest" >&2
+    return 1
+  fi
+
+  printf 'version: ok (%s)\n' "$constant"
+}
+
+rc::boundary() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+
+  local vendor_hits
+  vendor_hits="$(grep -nE 'GITHUB_|GITLAB_|CIRCLE_|BUILDKITE_|BITBUCKET_' \
+    "$target_file" || true)"
+  if [[ -n "$vendor_hits" ]]; then
+    printf '%s\n' "$vendor_hits" >&2
+    printf 'boundary: CI-vendor markers found in %s\n' "$target_file" >&2
+    return 1
+  fi
+
+  local forbidden
+  forbidden="$(grep -nE '^[[:space:]]*(build|deploy|release|test|lint)\)' \
+    "$target_file" || true)"
+  if [[ -n "$forbidden" ]]; then
+    printf '%s\n' "$forbidden" >&2
+    printf 'boundary: forbidden public command names found in dispatch of %s\n' \
+      "$target_file" >&2
+    return 1
+  fi
+
+  printf 'boundary: ok\n'
+}
+
+rc::copy_smoke() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local tmpdir=""
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir:-}"' RETURN
+
+  cp "$target_file" "$tmpdir/ci-toolkit"
+  chmod +x "$tmpdir/ci-toolkit"
+
+  local rc=0
+  (
+    cd "$tmpdir"
+    ./ci-toolkit help >/dev/null
+    ./ci-toolkit version | grep -q '^ci-toolkit '
+    bash -c "source './ci-toolkit' && ci::info 'ok'" >/dev/null 2>/dev/null
+  ) || rc=$?
+
+  if [[ "$rc" -ne 0 ]]; then
+    printf 'copy-smoke: standalone artifact failed (rc=%s)\n' "$rc" >&2
+    return 1
+  fi
+
+  printf 'copy-smoke: ok\n'
+}
+
+rc::gates() {
+  # Guard against infinite recursion: scripts/test runs tests/test_release_check.sh,
+  # which calls "release-check all", which calls rc::gates, which calls scripts/test
+  # again. When RC_INSIDE_GATES is already set we are in a recursive invocation;
+  # skip scripts/test to break the cycle while still running lint and smoke.
+  local tests_status="ok"
+  if [[ -z "${RC_INSIDE_GATES:-}" ]]; then
+    RC_INSIDE_GATES=1 "$ROOT_DIR/scripts/test"
+  else
+    tests_status="skipped (recursive invocation)"
+  fi
+
+  local lint_status
+  "$ROOT_DIR/scripts/lint"
+  if command -v shellcheck >/dev/null 2>&1; then
+    lint_status="ran"
+  else
+    lint_status="skipped (shellcheck not installed)"
+  fi
+
+  "$ROOT_DIR/scripts/smoke"
+
+  printf 'gates: tests %s; lint %s; smoke ok\n' "$tests_status" "$lint_status"
+}
+
+main() {
+  local subcommand="${1:-all}"
+  if [[ "$#" -gt 0 ]]; then
+    shift
+  fi
+
+  case "$subcommand" in
+    version)
+      rc::version "$@"
+      ;;
+    boundary)
+      rc::boundary "$@"
+      ;;
+    copy-smoke)
+      rc::copy_smoke "$@"
+      ;;
+    gates)
+      rc::gates "$@"
+      ;;
+    all)
+      rc::version
+      rc::gates
+      rc::boundary
+      rc::copy_smoke
+      printf 'release-check: all checks passed\n'
+      ;;
+    *)
+      printf 'usage: release-check [version|boundary|copy-smoke|gates|all]\n' >&2
+      return 64
+      ;;
+  esac
+}
+
+main "$@"

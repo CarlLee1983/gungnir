@@ -11,6 +11,7 @@ fi
 
 shellcheck \
   "$ROOT_DIR/ci-toolkit" \
+  "$ROOT_DIR/scripts/release-check" \
   "$ROOT_DIR"/scripts/test \
   "$ROOT_DIR"/scripts/lint \
   "$ROOT_DIR"/scripts/smoke \

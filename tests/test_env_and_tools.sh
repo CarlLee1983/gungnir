@@ -14,6 +14,7 @@ run_capture() {
   "$@" >"$stdout_file" 2>"$stderr_file"
   status=$?
   set -e
+  # shellcheck disable=SC2034  # consumed by assert_* helpers in calling scope
   RUN_STDOUT="$(cat "$stdout_file")"
   RUN_STDERR="$(cat "$stderr_file")"
   RUN_STATUS="$status"
