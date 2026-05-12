@@ -23,6 +23,8 @@ if [[ -L "$dst" ]]; then
     echo "already linked $dst -> $current"
     exit 0
   fi
+  echo "different symlink exists at $dst -> $current; aborting" >&2
+  exit 1
 fi
 
 if [[ -e "$dst" ]]; then
