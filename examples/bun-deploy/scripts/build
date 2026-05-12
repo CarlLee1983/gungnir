@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# scripts/build — install deps, test, and bundle for production.
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+# shellcheck source=../ci-toolkit
+source ./ci-toolkit
+
+ci::info "installing dependencies"
+# bun install hits the registry; flaky networks deserve a retry.
+ci::retry 3 bun install
+
+ci::info "running tests"
+# Tests should NOT be retried — flake means a bug to surface, not hide.
+bun test
+
+ci::info "building production bundle"
+# A failing build is deterministic; no retry needed.
+bun run build
+
+ci::info "build done — outputs in ./dist"

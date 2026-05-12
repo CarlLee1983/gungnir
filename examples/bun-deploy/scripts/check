@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# scripts/check — validate preconditions before build/deploy.
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+# shellcheck source=../ci-toolkit
+source ./ci-toolkit
+
+ci::info "checking preconditions"
+
+# Tools needed for build (always).
+for tool in bun; do
+  ci::require_tool "$tool" || exit 1
+done
+
+# Tools and env needed for deploy (only when actually deploying).
+if [[ "${RUN_DEPLOY:-1}" == "1" ]]; then
+  ci::require_tool docker || exit 1
+  for var in IMAGE_TAG REGISTRY_URL REGISTRY_TOKEN; do
+    ci::require_env "$var" || exit 1
+  done
+fi
+
+ci::info "preconditions ok"

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# scripts/release — chain check → build → deploy.
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+# shellcheck source=../ci-toolkit
+source ./ci-toolkit
+
+ci::info "=== release pipeline start ==="
+./scripts/check
+./scripts/build
+./scripts/deploy
+ci::info "=== release pipeline done ==="

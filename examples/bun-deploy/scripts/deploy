@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# scripts/deploy — build and push a container image.
+# Runs in DRY-RUN mode unless DEPLOY_REAL=1 is set.
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+# shellcheck source=../ci-toolkit
+source ./ci-toolkit
+
+# Validate everything up front, even for dry-run, so the same failures are
+# observed in dry-run as in real deploys.
+ci::require_env IMAGE_TAG      || exit 1
+ci::require_env REGISTRY_URL   || exit 1
+ci::require_env REGISTRY_TOKEN || exit 1
+ci::require_tool docker        || exit 1
+
+image="${REGISTRY_URL}/bun-deploy-example:${IMAGE_TAG}"
+ci::info "target image: $image"
+
+if [[ "${DEPLOY_REAL:-0}" != "1" ]]; then
+  ci::warn "DEPLOY_REAL is not set; running in DRY-RUN mode"
+  ci::info "[dry-run] docker login $REGISTRY_URL"
+  ci::info "[dry-run] docker build -t $image ."
+  ci::info "[dry-run] docker push $image"
+  ci::info "dry-run done"
+  exit 0
+fi
+
+ci::info "docker login"
+# Pipe the token via stdin so it never appears in argv or `ps` output.
+if ! printf '%s' "$REGISTRY_TOKEN" \
+    | docker login "$REGISTRY_URL" -u "${REGISTRY_USER:-ci}" --password-stdin; then
+  ci::error "docker login failed"
+  exit 1
+fi
+
+ci::info "building image"
+docker build -t "$image" .
+
+ci::info "pushing image"
+ci::retry 3 docker push "$image"
+
+ci::info "deploy done: $image"
