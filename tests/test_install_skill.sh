@@ -25,8 +25,11 @@ set -e
 skills_dir="$(make_temp_dir)"
 CLAUDE_SKILLS_DIR="$skills_dir" run_capture "$ROOT_DIR/scripts/install-skill"
 assert_status 0 "$RUN_STATUS" "happy path: installer exits 0"
-[[ -L "$skills_dir/ci-toolkit" ]] && pass "happy path: destination is a symlink" \
-  || fail "happy path: destination is not a symlink"
+if [[ -L "$skills_dir/ci-toolkit" ]]; then
+  pass "happy path: destination is a symlink"
+else
+  fail "happy path: destination is not a symlink"
+fi
 assert_eq "$ROOT_DIR/skills/ci-toolkit" "$(readlink "$skills_dir/ci-toolkit")" \
   "happy path: symlink target equals skills/ci-toolkit"
 assert_contains "$RUN_STDOUT" "linked" "happy path: stdout reports linked"
@@ -45,8 +48,11 @@ skills_dir3="$(make_temp_dir)"
 printf 'unrelated content\n' >"$skills_dir3/ci-toolkit"
 original_content="$(cat "$skills_dir3/ci-toolkit")"
 CLAUDE_SKILLS_DIR="$skills_dir3" run_capture "$ROOT_DIR/scripts/install-skill"
-[[ "$RUN_STATUS" -ne 0 ]] && pass "regular-file conflict: non-zero exit" \
-  || fail "regular-file conflict: expected non-zero exit, got 0"
+if [[ "$RUN_STATUS" -ne 0 ]]; then
+  pass "regular-file conflict: non-zero exit"
+else
+  fail "regular-file conflict: expected non-zero exit, got 0"
+fi
 assert_contains "$RUN_STDERR" "aborting" "regular-file conflict: stderr mentions aborting"
 assert_eq "$original_content" "$(cat "$skills_dir3/ci-toolkit")" \
   "regular-file conflict: existing file untouched"
@@ -56,8 +62,11 @@ skills_dir4="$(make_temp_dir)"
 other_target="$(make_temp_dir)"
 ln -s "$other_target" "$skills_dir4/ci-toolkit"
 CLAUDE_SKILLS_DIR="$skills_dir4" run_capture "$ROOT_DIR/scripts/install-skill"
-[[ "$RUN_STATUS" -ne 0 ]] && pass "wrong-symlink conflict: non-zero exit" \
-  || fail "wrong-symlink conflict: expected non-zero exit, got 0"
+if [[ "$RUN_STATUS" -ne 0 ]]; then
+  pass "wrong-symlink conflict: non-zero exit"
+else
+  fail "wrong-symlink conflict: expected non-zero exit, got 0"
+fi
 assert_contains "$RUN_STDERR" "different symlink exists" \
   "wrong-symlink conflict: stderr mentions different symlink"
 assert_eq "$other_target" "$(readlink "$skills_dir4/ci-toolkit")" \

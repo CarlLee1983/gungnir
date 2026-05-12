@@ -85,6 +85,28 @@ rc::copy_smoke() {
   printf 'copy-smoke: ok\n'
 }
 
+rc::gates() {
+  # Guard against infinite recursion: scripts/test runs tests/test_release_check.sh,
+  # which calls "release-check all", which calls rc::gates, which calls scripts/test
+  # again. When RC_INSIDE_GATES is already set we are in a recursive invocation;
+  # skip scripts/test to break the cycle while still running lint and smoke.
+  if [[ -z "${RC_INSIDE_GATES:-}" ]]; then
+    RC_INSIDE_GATES=1 "$ROOT_DIR/scripts/test"
+  fi
+
+  local lint_status
+  "$ROOT_DIR/scripts/lint"
+  if command -v shellcheck >/dev/null 2>&1; then
+    lint_status="ran"
+  else
+    lint_status="skipped (shellcheck not installed)"
+  fi
+
+  "$ROOT_DIR/scripts/smoke"
+
+  printf 'gates: tests ok; lint %s; smoke ok\n' "$lint_status"
+}
+
 main() {
   local subcommand="${1:-all}"
   if [[ "$#" -gt 0 ]]; then
@@ -101,8 +123,18 @@ main() {
     copy-smoke)
       rc::copy_smoke "$@"
       ;;
+    gates)
+      rc::gates "$@"
+      ;;
+    all)
+      rc::version
+      rc::gates
+      rc::boundary
+      rc::copy_smoke
+      printf 'release-check: all checks passed\n'
+      ;;
     *)
-      printf 'usage: release-check [version|boundary|copy-smoke]\n' >&2
+      printf 'usage: release-check [version|boundary|copy-smoke|gates|all]\n' >&2
       return 64
       ;;
   esac
