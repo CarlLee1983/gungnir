@@ -35,6 +35,31 @@ rc::version() {
   printf 'version: ok (%s)\n' "$constant"
 }
 
+rc::boundary() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+
+  local vendor_hits
+  vendor_hits="$(grep -nE 'GITHUB_|GITLAB_|CIRCLE_|BUILDKITE_|BITBUCKET_' \
+    "$target_file" || true)"
+  if [[ -n "$vendor_hits" ]]; then
+    printf '%s\n' "$vendor_hits" >&2
+    printf 'boundary: CI-vendor markers found in %s\n' "$target_file" >&2
+    return 1
+  fi
+
+  local forbidden
+  forbidden="$(grep -nE '^[[:space:]]*(build|deploy|release|test|lint)\)' \
+    "$target_file" || true)"
+  if [[ -n "$forbidden" ]]; then
+    printf '%s\n' "$forbidden" >&2
+    printf 'boundary: forbidden public command names found in dispatch of %s\n' \
+      "$target_file" >&2
+    return 1
+  fi
+
+  printf 'boundary: ok\n'
+}
+
 main() {
   local subcommand="${1:-all}"
   if [[ "$#" -gt 0 ]]; then
@@ -45,8 +70,11 @@ main() {
     version)
       rc::version "$@"
       ;;
+    boundary)
+      rc::boundary "$@"
+      ;;
     *)
-      printf 'usage: release-check [version]\n' >&2
+      printf 'usage: release-check [version|boundary]\n' >&2
       return 64
       ;;
   esac
