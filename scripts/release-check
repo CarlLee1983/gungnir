@@ -90,8 +90,11 @@ rc::gates() {
   # which calls "release-check all", which calls rc::gates, which calls scripts/test
   # again. When RC_INSIDE_GATES is already set we are in a recursive invocation;
   # skip scripts/test to break the cycle while still running lint and smoke.
+  local tests_status="ok"
   if [[ -z "${RC_INSIDE_GATES:-}" ]]; then
     RC_INSIDE_GATES=1 "$ROOT_DIR/scripts/test"
+  else
+    tests_status="skipped (recursive invocation)"
   fi
 
   local lint_status
@@ -104,7 +107,7 @@ rc::gates() {
 
   "$ROOT_DIR/scripts/smoke"
 
-  printf 'gates: tests ok; lint %s; smoke ok\n' "$lint_status"
+  printf 'gates: tests %s; lint %s; smoke ok\n' "$tests_status" "$lint_status"
 }
 
 main() {

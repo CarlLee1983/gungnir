@@ -123,7 +123,14 @@ assert_status 0 "$RUN_STATUS" "release-check all: clean repo exits zero"
 assert_contains "$RUN_STDOUT" "version: ok" "release-check all: ran version check"
 assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary check"
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
+assert_contains "$RUN_STDOUT" "gates:" "release-check all: ran gates check"
 assert_contains "$RUN_STDOUT" "release-check: all checks passed" \
   "release-check all: prints final summary"
+
+# gates subcommand: recursion guard must skip scripts/test when RC_INSIDE_GATES is set.
+RC_INSIDE_GATES=1 run_capture "$RELEASE_CHECK" gates
+assert_status 0 "$RUN_STATUS" "release-check gates: recursion guard exits zero"
+assert_contains "$RUN_STDOUT" "tests skipped (recursive invocation)" \
+  "release-check gates: guard reports tests skipped"
 
 finish_tests
