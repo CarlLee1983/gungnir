@@ -6,24 +6,18 @@
 #   remote hosts → optional Slack notification.
 #
 # This file is a worked example showing how to retrofit ci-toolkit into an
-# existing ~400-line deploy script. Domain logic (repo discovery, tag mode,
-# multi-host targets, dry-run mapping, Slack) is preserved as-is; only the
-# logging/env/tool/retry boilerplate is delegated to the toolkit.
-#
-# Required co-located files (relative to this script):
-#   ci-toolkit                                  # vendored from Gungnir
-#   $BUILD_REPO/infra/ci/build.sh               # project's own build script
-#   $BUILD_REPO/infra/ci/deploy.sh              # project's own deploy script
-#   $BUILD_REPO/infra/ci/sync-env-to-shared.sh  # optional, if SYNC_ENV_TO_SHARED=1
+# existing deploy script, while making it highly reusable.
+# Domain logic is preserved, but project-specific paths are extracted into Hooks.
 #
 # In a real project, vendor ci-toolkit once:
 #   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.0/ci-toolkit \
 #       -o infra/ci/ci-toolkit && chmod +x infra/ci/ci-toolkit
-#
-# Full env/CLI documentation is intentionally trimmed; see the repo it ships
-# with for the long-form header. Behavior is identical to the original script.
 
 set -euo pipefail
+
+# ==============================================================================
+# [ Configuration & Hooks ]
+# ==============================================================================
 
 # --- 佈署機專用 (預設保持註解；本機若要 deploy 再取消註解) ---------------------
 # DO_DEPLOY=1
@@ -41,45 +35,60 @@ readonly SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_FOLDER="${REPO_FOLDER:-production}"
 readonly BUILD_REPO_DEFAULT="$SCRIPT_DIR/$REPO_FOLDER"
 
-# Load ci-toolkit from the same directory as this script (vendored pattern).
+# Hook Paths: Allow overriding project-specific script locations
+readonly HOOK_BUILD="${HOOK_BUILD:-infra/ci/build.sh}"
+readonly HOOK_DEPLOY="${HOOK_DEPLOY:-infra/ci/deploy.sh}"
+readonly HOOK_SYNC="${HOOK_SYNC:-infra/ci/sync-env-to-shared.sh}"
+
+# Load ci-toolkit
 # shellcheck source=./ci-toolkit
 source "$SCRIPT_DIR/ci-toolkit"
 
+# Global state
 DISCOVER_ARGS=()
+DEPLOY_RAN=0
 
-sample_print_usage() {
+# ==============================================================================
+# [ CLI & Usage ]
+# ==============================================================================
+
+print_usage() {
     cat <<'USAGE' >&2
 Usage: deploy-prod.sh [options] [repo dir]
 
 Options:
   --dry-run     With DO_DEPLOY=1, run rsync in dry-run mode (DEPLOY_DRY_RUN=1).
-  --skip-verify Pass --skip-verify to build.sh.
+  --skip-verify Pass --skip-verify to build script.
   -h, --help    Show this help.
 USAGE
 }
 
-parse_sample_cli() {
+parse_cli() {
     local -a rest=()
-    SAMPLE_DEPLOY_DRY_RUN="${SAMPLE_DEPLOY_DRY_RUN:-0}"
+    DEPLOY_DRY_RUN_FLAG="${DEPLOY_DRY_RUN_FLAG:-0}"
+    BUILD_SKIP_VERIFY="${BUILD_SKIP_VERIFY:-0}"
+
     while [ $# -gt 0 ]; do
         case "$1" in
-            --dry-run)     SAMPLE_DEPLOY_DRY_RUN=1 ;;
+            --dry-run)     DEPLOY_DRY_RUN_FLAG=1 ;;
             --skip-verify) BUILD_SKIP_VERIFY=1 ;;
-            -h|--help)     sample_print_usage; exit 0 ;;
+            -h|--help)     print_usage; exit 0 ;;
             *)             rest+=("$1") ;;
         esac
         shift
     done
     DISCOVER_ARGS=("${rest[@]}")
-    export SAMPLE_DEPLOY_DRY_RUN
+    export DEPLOY_DRY_RUN_FLAG
     export BUILD_SKIP_VERIFY
 }
 
-# Project-specific marker (kept verbatim from the original): a project root
-# has both `.git` and `infra/ci/build.sh`. ci::find_up could match a single
-# marker, but two-marker logic stays project-local.
+# ==============================================================================
+# [ Path Discovery ]
+# ==============================================================================
+
 is_project_root() {
-    [ -d "$1/.git" ] && [ -f "$1/infra/ci/build.sh" ]
+    local dir="$1"
+    [ -d "$dir/.git" ] && [ -f "$dir/$HOOK_BUILD" ]
 }
 
 resolve_repo_root() {
@@ -106,15 +115,14 @@ discover_build_repo() {
     ci::die "cannot resolve repo root; set BUILD_REPO, pass a path, or place clone at \$REPO_FOLDER next to this script" || exit 1
 }
 
-require_preconditions() {
-    ci::require_tool git || exit 1
-    ci::require_tool bun || exit 1
-}
-
 assert_repo_layout() {
     [ -d "$BUILD_REPO/.git" ] || { ci::die "not a git repo: $BUILD_REPO"; exit 1; }
-    [ -f "$BUILD_SCRIPT" ]    || { ci::die "build script missing: $BUILD_SCRIPT"; exit 1; }
+    [ -f "$BUILD_REPO/$HOOK_BUILD" ] || { ci::die "build hook missing: $BUILD_REPO/$HOOK_BUILD"; exit 1; }
 }
+
+# ==============================================================================
+# [ Git Operations ]
+# ==============================================================================
 
 require_branch_unless_tag_mode() {
     if [ "${BUILD_CHECKOUT_LATEST_TAG:-0}" = "1" ]; then return 0; fi
@@ -145,8 +153,9 @@ checkout_latest_matching_tag() {
     ci::retry 3 git fetch origin --tags --quiet 2>/dev/null || true
 
     local latest_tag
-    latest_tag=$(git tag -l "${GIT_TAG_PREFIX}*" | sort -V | tail -n 1)
-    [ -n "$latest_tag" ] || { ci::die "no tag matches ${GIT_TAG_PREFIX}*"; exit 1; }
+    if ! latest_tag=$(ci::git_latest_tag "${GIT_TAG_PREFIX}"); then
+        exit 1
+    fi
 
     ci::info "checkout latest matching tag: $latest_tag"
     git checkout "$latest_tag"
@@ -164,6 +173,20 @@ sync_git_ref() {
         checkout_latest_matching_tag
     else
         checkout_branch_and_pull
+    fi
+}
+
+# ==============================================================================
+# [ Build & Deploy Hooks ]
+# ==============================================================================
+
+run_build_hook() {
+    if [ "${BUILD_SKIP_VERIFY:-0}" = "1" ]; then
+        ci::info "build: $HOOK_BUILD --skip-verify"
+        "$BUILD_REPO/$HOOK_BUILD" --skip-verify
+    else
+        ci::info "build: $HOOK_BUILD"
+        "$BUILD_REPO/$HOOK_BUILD"
     fi
 }
 
@@ -194,18 +217,15 @@ assert_deploy_service_name_if_set() {
 
 run_sync_env_to_shared_if_requested() {
     [ "${SYNC_ENV_TO_SHARED:-0}" = "1" ] || return 0
-    local sync_script="$BUILD_REPO/infra/ci/sync-env-to-shared.sh"
+    local sync_script="$BUILD_REPO/$HOOK_SYNC"
     [ -f "$sync_script" ] || { ci::die "SYNC_ENV_TO_SHARED=1 but $sync_script not found"; exit 1; }
-    ci::info "sync-env-to-shared.sh → ${DEPLOY_USER}@${DEPLOY_HOST}"
+    ci::info "sync env: $HOOK_SYNC → ${DEPLOY_USER}@${DEPLOY_HOST}"
     "$sync_script"
 }
 
-run_deploy_if_requested() {
-    local deploy_script target
-    local -a target_list
-
+run_deploy_hooks() {
     if [ "${DO_DEPLOY:-0}" != "1" ]; then
-        ci::info "skip deploy.sh (set DO_DEPLOY=1 to enable)"
+        ci::info "skip deploy (set DO_DEPLOY=1 to enable)"
         return 0
     fi
 
@@ -213,17 +233,18 @@ run_deploy_if_requested() {
     assert_deploy_service_name_if_set
     [ -n "${DEPLOY_RELEASE_RETAIN_COUNT+x}" ] && export DEPLOY_RELEASE_RETAIN_COUNT
 
-    if [ "${SAMPLE_DEPLOY_DRY_RUN:-0}" = "1" ]; then
+    if [ "${DEPLOY_DRY_RUN_FLAG:-0}" = "1" ]; then
         export DEPLOY_DRY_RUN=1
         ci::info "deploy dry-run (DEPLOY_DRY_RUN=1)"
     fi
 
-    deploy_script="$BUILD_REPO/infra/ci/deploy.sh"
+    local deploy_script="$BUILD_REPO/$HOOK_DEPLOY"
     [ -f "$deploy_script" ] || { ci::die "deploy script missing: $deploy_script"; exit 1; }
 
-    SAMPLE_DEPLOY_RAN=1
+    DEPLOY_RAN=1
 
     if [ -n "${DEPLOY_TARGETS:-}" ]; then
+        local -a target_list
         read -ra target_list <<< "${DEPLOY_TARGETS}"
         [ "${#target_list[@]}" -gt 0 ] \
             || { ci::die "DO_DEPLOY=1 but DEPLOY_TARGETS is blank"; exit 1; }
@@ -233,7 +254,7 @@ run_deploy_if_requested() {
             export DEPLOY_USER="${target%%@*}"
             export DEPLOY_HOST="${target#*@}"
             run_sync_env_to_shared_if_requested
-            ci::info "deploy.sh → ${DEPLOY_USER}@${DEPLOY_HOST}"
+            ci::info "deploy: $HOOK_DEPLOY → ${DEPLOY_USER}@${DEPLOY_HOST}"
             "$deploy_script"
         done
         return 0
@@ -245,61 +266,41 @@ run_deploy_if_requested() {
     }
 
     run_sync_env_to_shared_if_requested
-    ci::info "deploy.sh"
+    ci::info "deploy: $HOOK_DEPLOY"
     "$deploy_script"
 }
 
-slack_notify() {
-    [ -n "${SLACK_WEBHOOK_URL:-}" ] || return 0
+# ==============================================================================
+# [ Main Pipeline ]
+# ==============================================================================
 
-    if ! command -v curl >/dev/null 2>&1; then
-        ci::warn "SLACK_WEBHOOK_URL set but curl is not on PATH; skipping Slack"
-        return 0
+main() {
+    parse_cli "$@"
+    
+    discover_build_repo "${DISCOVER_ARGS[@]}"
+    BUILD_REPO=$(cd "$BUILD_REPO" && pwd)
+    export BUILD_REPO
+    
+    ci::require_tool git || exit 1
+    ci::require_tool bun || exit 1
+
+    assert_repo_layout
+    require_branch_unless_tag_mode
+
+    cd "$BUILD_REPO"
+    ci::info "repo: $BUILD_REPO"
+
+    fetch_origin
+    fetch_tags_for_prefix_best_effort
+    sync_git_ref
+
+    run_build_hook
+    run_deploy_hooks
+
+    if [ "${DEPLOY_RAN:-0}" = "1" ]; then
+        ci::slack_webhook SLACK_WEBHOOK_URL "${SLACK_PROJECT_NAME:-my-app}" "success" "Build and deploy completed successfully."
     fi
-
-    local project="${SLACK_PROJECT_NAME:-my-app}"
-    local status="$1" message="$2"
-    local payload="{\"text\": \"*[$project]* ${status}: ${message}\"}"
-
-    # Notification is best-effort: retry transient errors, but never fail the
-    # pipeline on Slack flakiness.
-    ci::retry 3 curl -sS --connect-timeout 5 --max-time 15 \
-        -X POST -H 'Content-type: application/json' \
-        --data "$payload" "$SLACK_WEBHOOK_URL" -o /dev/null || true
 }
 
-# --- main --------------------------------------------------------------------
-
-parse_sample_cli "$@"
-
-discover_build_repo "${DISCOVER_ARGS[@]}"
-
-BUILD_REPO=$(cd "$BUILD_REPO" && pwd)
-readonly BUILD_REPO
-readonly BUILD_SCRIPT="$BUILD_REPO/infra/ci/build.sh"
-
-require_preconditions
-assert_repo_layout
-require_branch_unless_tag_mode
-
-cd "$BUILD_REPO"
-ci::info "repo: $BUILD_REPO"
-
-fetch_origin
-fetch_tags_for_prefix_best_effort
-sync_git_ref
-
-if [ "${BUILD_SKIP_VERIFY:-0}" = "1" ]; then
-    ci::info "build.sh --skip-verify"
-    "$BUILD_SCRIPT" --skip-verify
-else
-    ci::info "build.sh"
-    "$BUILD_SCRIPT"
-fi
-
-SAMPLE_DEPLOY_RAN=0
-run_deploy_if_requested
-
-if [ "${SAMPLE_DEPLOY_RAN:-0}" = "1" ]; then
-    slack_notify "success" "Build and deploy completed successfully."
-fi
+# Execute
+main "$@"
