@@ -211,20 +211,12 @@ resolve_target_tag() {
     fi
 }
 
-# run_composer_install — composer install with one-shot retry-with-delay.
-#
-# proposed: ci::retry --delay SECONDS (see spec §5.1, plan TBD)
-# After §5.1 lands, replace the body with:
-#     ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
+# run_composer_install — composer install with a 30s gap between attempts.
 run_composer_install() {
     ci::require_tool composer || exit 1
     export COMPOSER_ALLOW_SUPERUSER=1
 
-    if ! composer install --no-dev --optimize-autoloader; then
-        ci::warn "first composer install attempt failed; sleeping 30s before retry"
-        sleep 30
-        composer install --no-dev --optimize-autoloader
-    fi
+    ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 }
 
 # run_npm_build — preserved verbatim; only adds the ci::require_tool guard.

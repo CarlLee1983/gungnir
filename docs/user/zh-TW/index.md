@@ -13,7 +13,7 @@ Gungnir 是一個實驗性的、平台中立的 Bash 工具包，旨在簡化 CI
 直接在您的 CI 環境中使用 `curl` 和 `chmod` 安裝 `ci-toolkit` 檔案。我們建議固定到特定的發佈標籤（release tag）以確保穩定性：
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -64,7 +64,7 @@ if ci::is_true SKIP_TESTS; then ...
 ## 寫入與變更
 
 ### 穩健的重試機制
-Gungnir 的 `ci::retry` 比簡單的迴圈更強大。它會保留最後一次嘗試的退出狀態，並將失敗記錄到 stderr。
+Gungnir 的 `ci::retry` 比簡單的迴圈更強大。它會保留最後一次嘗試的退出狀態，並將失敗記錄到 stderr。可加上 `--delay SECONDS` 在失敗的嘗試之間 sleep — 適用於 package registry、deploy target 等需要喘息的上游服務。
 
 **範例：不穩定的網路呼叫**
 ```bash
@@ -76,6 +76,9 @@ done
 
 # Gungnir
 ci::retry 3 curl -fsS https://api.example.com
+
+# 兩次嘗試之間相隔 30 秒（適合 registry / package manager）
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 ```
 
 ### 安全的環境檢查

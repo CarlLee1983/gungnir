@@ -4,7 +4,7 @@
 # Usage as source: source ./ci-toolkit && ci::info "message"
 # Runtime: Bash 4+
 
-CI_TOOLKIT_VERSION="0.1.4"
+CI_TOOLKIT_VERSION="0.1.5"
 CI_TOOLKIT_NAME="ci-toolkit"
 
 # Log a message with a specific level (info, warn, error, debug).
@@ -82,18 +82,47 @@ ci::require_tool() {
   return 0
 }
 
-# Retry a command N times.
+# Retry a command N times, with an optional delay between attempts.
 ci::retry() {
   local attempts="${1:-}"
   shift || true
 
   if [[ -z "$attempts" || ! "$attempts" =~ ^[0-9]+$ || "$attempts" -lt 1 ]]; then
-    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    ci::error "Usage: ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND..."
     return 64
   fi
 
+  local delay=0
+  while (( $# > 0 )); do
+    case "$1" in
+      --delay)
+        if [[ $# -lt 2 ]]; then
+          ci::error "ci::retry: --delay requires a value"
+          return 64
+        fi
+        if [[ ! "$2" =~ ^[0-9]+$ ]]; then
+          ci::error "ci::retry: --delay value must be a non-negative integer, got: $2"
+          return 64
+        fi
+        delay="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      --*)
+        ci::error "ci::retry: unknown option: $1"
+        return 64
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
   if [[ "$#" -eq 0 ]]; then
-    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    ci::error "Usage: ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND..."
     return 64
   fi
 
@@ -109,6 +138,10 @@ ci::retry() {
     fi
 
     ci::warn "Attempt $attempt/$attempts failed with status $status: $*"
+
+    if (( attempt < attempts && delay > 0 )); then
+      sleep "$delay"
+    fi
   done
 
   return "$status"
@@ -263,7 +296,7 @@ Usage:
   ci-toolkit env require VAR_NAME
   ci-toolkit env default VAR_NAME DEFAULT_VALUE
   ci-toolkit tool require TOOL_NAME
-  ci-toolkit retry [ATTEMPTS] -- COMMAND [ARGS...]
+  ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]
   ci-toolkit git latest-tag [PREFIX]
   ci-toolkit slack webhook URL_VAR PROJECT STATUS MESSAGE
   ci-toolkit ls
@@ -349,15 +382,11 @@ ci::cmd_tool() {
 
 ci::cmd_retry() {
   local attempts=3
+  local -a forwarded=()
 
-  if [[ "${1:-}" != "--" ]]; then
+  if [[ "${1:-}" != "--" && "${1:-}" != "--delay" ]]; then
     attempts="${1:-}"
     shift || true
-  fi
-
-  if [[ "$attempts" != "3" && "${1:-}" != "--" ]]; then
-    ci::usage >&2
-    return 64
   fi
 
   if [[ -z "$attempts" || ! "$attempts" =~ ^[0-9]+$ || "$attempts" -lt 1 ]]; then
@@ -365,13 +394,33 @@ ci::cmd_retry() {
     return 64
   fi
 
-  if [[ "${1:-}" != "--" ]]; then
+  while (( $# > 0 )); do
+    case "$1" in
+      --delay)
+        if [[ $# -lt 2 ]]; then
+          ci::usage >&2
+          return 64
+        fi
+        forwarded+=(--delay "$2")
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        ci::usage >&2
+        return 64
+        ;;
+    esac
+  done
+
+  if [[ "$#" -eq 0 ]]; then
     ci::usage >&2
     return 64
   fi
-  shift
 
-  ci::retry "$attempts" "$@"
+  ci::retry "$attempts" "${forwarded[@]}" -- "$@"
 }
 
 ci::cmd_git() {

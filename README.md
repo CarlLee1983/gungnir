@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -40,6 +40,7 @@ Pin to a tag (`v0.1.0` above). The artifact is a single file with no runtime dep
 ./ci-toolkit tool require git
 ./ci-toolkit retry -- make test
 ./ci-toolkit retry 5 -- curl -fsS https://example.com/health
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 ```
 
 ### Source mode
@@ -51,6 +52,7 @@ ci::info "starting checks"
 ci::require_env DEPLOY_TOKEN
 ci::require_tool git
 ci::retry 3 make test
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 ```
 
 Source mode keeps control of the caller's shell: helpers return status codes and never call `exit`.
@@ -107,8 +109,7 @@ mismatching symlink at the destination.
 | `env require VAR_NAME` | Exit `1` if the environment variable is unset or empty. The variable's value is never printed. |
 | `env default VAR_NAME DEFAULT` | Print the value of `VAR_NAME`, or `DEFAULT` if it is unset or empty. |
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
-| `retry -- COMMAND [ARGS...]` | Run `COMMAND` up to 3 times until it returns `0`. Returns the last attempt's exit status. |
-| `retry ATTEMPTS -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times. `ATTEMPTS` must be a positive integer. |
+| `retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times (default `3`). `--delay` sleeps `SECONDS` between failed attempts; defaults to `0`. Returns the last attempt's exit status. |
 | `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. |
 | `slack webhook VAR PROJECT STATUS MSG` | Send a notification to Slack using the URL stored in `VAR`. |
 | `ls` | List all available `ci::` functions and their descriptions. |
@@ -143,7 +144,7 @@ All functions live under the `ci::` namespace and return status codes; none of t
 
 | Function | Description |
 | --- | --- |
-| `ci::retry ATTEMPTS COMMAND...` | Run `COMMAND` up to `ATTEMPTS` times. Returns `0` on first success, otherwise returns the final attempt's exit status. Failed attempts log a `warn` line. |
+| `ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND...` | Run `COMMAND` up to `ATTEMPTS` times. `--delay` sleeps `SECONDS` between failed attempts (default `0`). Returns `0` on first success, otherwise returns the final attempt's exit status. Failed attempts log a `warn` line. |
 
 ### Paths
 

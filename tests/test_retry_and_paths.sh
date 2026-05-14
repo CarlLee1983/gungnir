@@ -52,11 +52,11 @@ assert_contains "$RUN_STDERR" "Attempt 3/4 failed" "CLI retry custom attempts re
 
 run_capture "$ROOT_DIR/ci-toolkit" retry 0 -- true
 assert_status 64 "$RUN_STATUS" "CLI retry rejects zero attempts"
-assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] -- COMMAND" "CLI retry zero attempts prints usage"
+assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND" "CLI retry zero attempts prints usage"
 
 run_capture "$ROOT_DIR/ci-toolkit" retry 2 true
 assert_status 64 "$RUN_STATUS" "CLI retry requires separator before command"
-assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] -- COMMAND" "CLI retry missing separator prints usage"
+assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND" "CLI retry missing separator prints usage"
 
 path_dir="$(make_temp_dir)"
 mkdir -p "$path_dir/a/b/c"
