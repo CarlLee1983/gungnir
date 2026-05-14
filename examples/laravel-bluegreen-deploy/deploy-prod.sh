@@ -47,7 +47,43 @@ CURRENT_TAG=""
 LATEST_TAG=""
 NOTIFY_MESSAGE=""
 
-# === Local functions (filled in by later tasks) ===
+# === Local functions ===
+
+# parse_cli — local CLI flag parsing (spec §6.1 not-collected).
+# Sets SKIP_VERSION_CHECK / SPECIFIED_TAG / ENABLE_CLOUDWATCH module-level
+# variables; intentionally not delegated to ci-toolkit (the toolkit does not
+# parse argv — that is application policy).
+parse_cli() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip)
+                SKIP_VERSION_CHECK=true
+                shift
+                ;;
+            --tag=*)
+                SPECIFIED_TAG="${1#*=}"
+                shift
+                ;;
+            --cloudwatch)
+                ENABLE_CLOUDWATCH=true
+                shift
+                ;;
+            -h|--help)
+                cat <<'USAGE'
+Usage: deploy-prod.sh [--skip] [--tag=<tag_name>] [--cloudwatch]
+
+  --skip          Skip the "new tag must be greater than current" check.
+  --tag=<name>    Deploy a specific tag instead of the latest matching one.
+  --cloudwatch    Also create CloudWatch log groups after deploy.
+USAGE
+                exit 0
+                ;;
+            *)
+                ci::die "unknown arg: $1 (try --help)" || exit 1
+                ;;
+        esac
+    done
+}
 
 # === Pipeline ===
 main() {
