@@ -24,7 +24,7 @@ For local development or as an AI skill, you can use the provided `scripts/insta
 
 | Task | Raw Bash | Gungnir `ci-toolkit` |
 |------|----------|----------------------|
-| **Logging** | `echo "[INFO] starting"` | `ci::info "starting"` (standardized stderr, colored) |
+| **Logging** | `echo "[INFO] starting"` | `ci::info "starting"` (structured stderr logging with level prefix) |
 | **Env Check** | `if [[ -z "$TOKEN" ]]; then ...; exit 1; fi` | `ci::require_env TOKEN` (silent, secure, dry) |
 | **Retry** | `for i in {1..3}; do cmd && break; sleep 1; done` | `ci::retry 3 cmd` (preserves exit code and output) |
 | **Path Fix** | `$(cd "$(dirname "$0")"/.. && pwd)` | `ci::root` or `ci::find_up .git` |

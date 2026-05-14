@@ -24,7 +24,7 @@ chmod +x ci-toolkit
 
 | 任務 | 原始 Bash 語法 | Gungnir `ci-toolkit` |
 |------|---------------|----------------------|
-| **日誌記錄** | `echo "[INFO] starting"` | `ci::info "starting"` (標準化 stderr, 支援顏色) |
+| **日誌記錄** | `echo "[INFO] starting"` | `ci::info "starting"` (結構化 stderr 日誌，附等級前綴) |
 | **環境變數檢查** | `if [[ -z "$TOKEN" ]]; then ...; exit 1; fi` | `ci::require_env TOKEN` (簡潔、安全、防呆) |
 | **指令重試** | `for i in {1..3}; do cmd && break; sleep 1; done` | `ci::retry 3 cmd` (完整保留退出碼與輸出) |
 | **路徑定位** | `$(cd "$(dirname "$0")"/.. && pwd)` | `ci::root` 或 `ci::find_up .git` |
