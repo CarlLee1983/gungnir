@@ -219,6 +219,33 @@ run_npm_build() {
     npm run build
 }
 
+# parse_blue_green_target_dir — local blue/green policy (spec §6.7 not-collected).
+#
+# Returns (stdout): the directory we should deploy INTO this run (the one the
+# symlink is NOT currently pointing at).
+#
+# Exit codes:
+#   0 — current symlink resolved; stdout is the next dir.
+#   2 — neither blue nor green is current (first deploy); stdout is BLUE_DIR
+#       and the caller should bootstrap both dirs on the host.
+parse_blue_green_target_dir() {
+    local host="$1"
+    local current_target
+
+    current_target=$(ssh -i "$SSH_KEY" "$host" "sudo readlink $SITE_DIR" 2>/dev/null || true)
+
+    if [[ "$current_target" == "$BLUE_DIR" ]]; then
+        printf '%s\n' "$GREEN_DIR"
+        return 0
+    elif [[ "$current_target" == "$GREEN_DIR" ]]; then
+        printf '%s\n' "$BLUE_DIR"
+        return 0
+    else
+        printf '%s\n' "$BLUE_DIR"
+        return 2
+    fi
+}
+
 # === Pipeline ===
 main() {
     :
