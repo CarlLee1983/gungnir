@@ -11,6 +11,7 @@
 - Added custom CLI retry attempts through `ci-toolkit retry ATTEMPTS --`.
 - Added path helpers `ci::find_up` and `ci::root`.
 - Added Bash behavior tests, optional ShellCheck linting, and smoke checks.
+- Added release artifact checks for executability, Bash runtime markers, and README install URL consistency.
 
 ### Breaking changes
 

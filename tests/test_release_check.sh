@@ -28,6 +28,10 @@ run_capture "$RELEASE_CHECK" version
 assert_status 0 "$RUN_STATUS" "release-check version: matching versions exit zero"
 assert_contains "$RUN_STDOUT" "version: ok" "release-check version: prints ok line"
 
+run_capture "$RELEASE_CHECK" artifact
+assert_status 0 "$RUN_STATUS" "release-check artifact: real artifact exits zero"
+assert_contains "$RUN_STDOUT" "artifact: ok" "release-check artifact: prints ok line"
+
 # version subcommand: synthetic ci-toolkit with mismatched constant must fail.
 tmp_root="$(make_temp_dir)"
 cat >"$tmp_root/ci-toolkit" <<'EOF'
@@ -59,6 +63,43 @@ run_capture "$RELEASE_CHECK" version "$parse_tmp/ci-toolkit" "$parse_tmp/CHANGEL
 assert_status 1 "$RUN_STATUS" "release-check version: unparseable artifact exits non-zero"
 assert_contains "$RUN_STDERR" "could not parse" \
   "release-check version: explains parse failure on stderr"
+
+not_executable_tmp="$(make_temp_dir)"
+cat >"$not_executable_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="0.1.0"
+EOF
+chmod 0644 "$not_executable_tmp/ci-toolkit"
+run_capture "$RELEASE_CHECK" artifact "$not_executable_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" "release-check artifact: non-executable artifact exits non-zero"
+assert_contains "$RUN_STDERR" "not executable" \
+  "release-check artifact: explains executable bit failure"
+
+missing_bash_marker_tmp="$(make_temp_dir)"
+cat >"$missing_bash_marker_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="0.1.0"
+EOF
+chmod +x "$missing_bash_marker_tmp/ci-toolkit"
+run_capture "$RELEASE_CHECK" artifact "$missing_bash_marker_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" "release-check artifact: missing bash marker exits non-zero"
+assert_contains "$RUN_STDERR" "Bash 4+ marker" \
+  "release-check artifact: explains missing bash marker"
+
+readme_tmp="$(make_temp_dir)"
+cat >"$readme_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+# Runtime: Bash 4+
+CI_TOOLKIT_VERSION="0.1.0"
+EOF
+chmod +x "$readme_tmp/ci-toolkit"
+cat >"$readme_tmp/README.md" <<'EOF'
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v9.9.9/ci-toolkit -o ci-toolkit
+EOF
+run_capture "$RELEASE_CHECK" artifact "$readme_tmp/ci-toolkit" "$readme_tmp/README.md"
+assert_status 1 "$RUN_STATUS" "release-check artifact: README version mismatch exits non-zero"
+assert_contains "$RUN_STDERR" "README install URL" \
+  "release-check artifact: explains README version mismatch"
 
 # boundary subcommand: real artifact has no vendor markers and no forbidden commands.
 run_capture "$RELEASE_CHECK" boundary
@@ -121,6 +162,7 @@ assert_not_contains "$RUN_STDOUT" "copy-smoke: ok" \
 run_capture "$RELEASE_CHECK" all
 assert_status 0 "$RUN_STATUS" "release-check all: clean repo exits zero"
 assert_contains "$RUN_STDOUT" "version: ok" "release-check all: ran version check"
+assert_contains "$RUN_STDOUT" "artifact: ok" "release-check all: ran artifact check"
 assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary check"
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
 assert_contains "$RUN_STDOUT" "gates:" "release-check all: ran gates check"

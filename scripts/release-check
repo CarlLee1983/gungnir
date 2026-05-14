@@ -4,15 +4,21 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+rc::toolkit_version() {
+  local target_file="$1"
+
+  grep -E '^CI_TOOLKIT_VERSION=' "$target_file" \
+    | head -1 \
+    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/' \
+    || true
+}
+
 rc::version() {
   local target_file="${1:-$ROOT_DIR/ci-toolkit}"
   local changelog_file="${2:-$ROOT_DIR/CHANGELOG.md}"
 
   local constant
-  constant="$(grep -E '^CI_TOOLKIT_VERSION=' "$target_file" \
-    | head -1 \
-    | sed -E 's/^CI_TOOLKIT_VERSION="([^"]*)".*/\1/' \
-    || true)"
+  constant="$(rc::toolkit_version "$target_file")"
 
   local latest
   latest="$(grep -E '^## v' "$changelog_file" \
@@ -33,6 +39,52 @@ rc::version() {
   fi
 
   printf 'version: ok (%s)\n' "$constant"
+}
+
+rc::artifact() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local readme_file="${2:-$ROOT_DIR/README.md}"
+
+  if [[ ! -x "$target_file" ]]; then
+    printf 'artifact: %s is not executable\n' "$target_file" >&2
+    return 1
+  fi
+
+  if ! head -1 "$target_file" | grep -Eq '^#!/usr/bin/env bash$|^#!/.*bash$'; then
+    printf 'artifact: %s must use a Bash shebang\n' "$target_file" >&2
+    return 1
+  fi
+
+  if ! grep -q 'Bash 4+' "$target_file"; then
+    printf 'artifact: %s is missing the Bash 4+ marker\n' "$target_file" >&2
+    return 1
+  fi
+
+  local constant
+  constant="$(rc::toolkit_version "$target_file")"
+  if [[ -z "$constant" ]]; then
+    printf 'artifact: could not parse CI_TOOLKIT_VERSION from %s\n' "$target_file" >&2
+    return 1
+  fi
+
+  local readme_version
+  readme_version="$(grep -Eo 'releases/download/v[0-9][^/[:space:]]*/ci-toolkit' \
+    "$readme_file" \
+    | head -1 \
+    | sed -E 's#releases/download/v([^/]+)/ci-toolkit#\1#' \
+    || true)"
+  if [[ -z "$readme_version" ]]; then
+    printf 'artifact: could not parse README install URL from %s\n' "$readme_file" >&2
+    return 1
+  fi
+
+  if [[ "$constant" != "$readme_version" ]]; then
+    printf 'artifact: README install URL v%s does not match CI_TOOLKIT_VERSION=%s\n' \
+      "$readme_version" "$constant" >&2
+    return 1
+  fi
+
+  printf 'artifact: ok\n'
 }
 
 rc::boundary() {
@@ -120,6 +172,9 @@ main() {
     version)
       rc::version "$@"
       ;;
+    artifact)
+      rc::artifact "$@"
+      ;;
     boundary)
       rc::boundary "$@"
       ;;
@@ -131,13 +186,14 @@ main() {
       ;;
     all)
       rc::version
+      rc::artifact
       rc::gates
       rc::boundary
       rc::copy_smoke
       printf 'release-check: all checks passed\n'
       ;;
     *)
-      printf 'usage: release-check [version|boundary|copy-smoke|gates|all]\n' >&2
+      printf 'usage: release-check [version|artifact|boundary|copy-smoke|gates|all]\n' >&2
       return 64
       ;;
   esac

@@ -202,6 +202,7 @@ release. It exposes individual checks plus an aggregate pipeline:
 
 ```bash
 ./scripts/release-check version      # CI_TOOLKIT_VERSION vs CHANGELOG.md
+./scripts/release-check artifact     # executable bit, Bash marker, README URL
 ./scripts/release-check boundary     # platform-neutral guardrails
 ./scripts/release-check copy-smoke   # standalone single-file distribution
 ./scripts/release-check gates        # tests, lint, smoke
