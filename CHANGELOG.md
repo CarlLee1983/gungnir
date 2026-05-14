@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.6 - Added utility helpers
+
+- Added `ci::version_gt` and `ci::version_ge` helpers for semver-style comparison, backed by `sort -V`. Accepts `vX.Y.Z`, `X.Y.Z`, `X.Y`, and simple pre-release tags. CLI: `ci-toolkit version gt LHS RHS` / `ci-toolkit version ge LHS RHS` — the no-arg `version` form is preserved.
+- Added `ci::strip_prefix PREFIX STRING` and `ci-toolkit strip-prefix` for literal prefix removal. Returns the original string unchanged when the prefix is absent; glob-character prefixes (`*`, `?`, `[abc]`) are treated literally.
+- Added `ci::trap_err` (source mode only) which enables `set -E` and installs a default ERR trap printing `exit code`, `file:line`, function, and `BASH_COMMAND`. Leaves `set -e/-u/pipefail` untouched. `ci-toolkit trap-err` (CLI) is an informational stub — see source mode.
+
+### Known limitations
+
+- `set -E` does not propagate `ERR` into every command-substitution subshell in older Bash builds; this is a Bash quirk, not a toolkit issue.
+- `ci::trap_err` replaces any previously installed `ERR` trap (standard Bash `trap` semantics).
+
 ## v0.1.5 - Added retry delay
 
 - Added `--delay SECONDS` flag to `ci::retry` (source mode) and `ci-toolkit retry` (CLI mode). Sleeps between failed attempts only; never before the first attempt and never after the last.

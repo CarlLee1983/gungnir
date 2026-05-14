@@ -21,12 +21,12 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.6/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
 
-Pin to a tag (`v0.1.5` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
+Pin to a tag (`v0.1.6` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
 
 ## Quickstart
 

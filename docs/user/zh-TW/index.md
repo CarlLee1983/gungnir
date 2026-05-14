@@ -13,7 +13,7 @@ Gungnir 是一個實驗性的、平台中立的 Bash 工具包，旨在簡化 CI
 直接在您的 CI 環境中使用 `curl` 和 `chmod` 安裝 `ci-toolkit` 檔案。我們建議固定到特定的發佈標籤（release tag）以確保穩定性：
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.6/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
