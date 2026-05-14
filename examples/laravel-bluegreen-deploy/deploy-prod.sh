@@ -146,6 +146,30 @@ compose_err_trap() {
     trap "$callback" ERR
 }
 
+# proposed: ci::strip_prefix VALUE PREFIX (see spec §5.3, plan TBD)
+# After §5.3 lands, replace call sites with `ci::strip_prefix "$value" "$prefix"`
+# and delete this function.
+strip_tag_prefix() {
+    local value="${1:-}"
+    local prefix="${2:-}"
+    printf '%s\n' "${value#"$prefix"}"
+}
+
+# proposed: ci::version_gt A B (see spec §5.2, plan TBD)
+# After §5.2 lands, replace this whole function with:
+#     ci::version_gt "$new_version" "$current_version" || {
+#         ci::die "New version ($LATEST_TAG) is not greater..." || exit 1
+#     }
+# and delete this function.
+compare_versions_or_exit() {
+    local new_version="${1:-}"
+    local current_version="${2:-}"
+    if [[ "$(printf '%s\n' "$new_version" "$current_version" | sort -V | head -n1)" == "$new_version" ]]; then
+        ci::error "New version ($LATEST_TAG) is not greater than current version ($CURRENT_TAG)"
+        ci::die "Deployment aborted!" || exit 1
+    fi
+}
+
 # === Pipeline ===
 main() {
     :
