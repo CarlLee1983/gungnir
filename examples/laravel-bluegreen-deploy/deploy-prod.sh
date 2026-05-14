@@ -132,6 +132,20 @@ send_slack_notification() {
     ci::slack_webhook SLACK_WEBHOOK_URL "laravel-bluegreen" "$status" "$message"
 }
 
+# proposed: ci::trap_err CALLBACK (see spec §5.4, plan TBD)
+# After §5.4 lands, replace this whole function with `ci::trap_err "$1"`.
+compose_err_trap() {
+    local callback="${1:-}"
+    if [[ -z "$callback" ]]; then
+        ci::die "compose_err_trap: callback is required" || exit 1
+    fi
+    set -E
+    # shellcheck disable=SC2064
+    # Reason: callback string is intentionally expanded eagerly here for the
+    # case-study; the §5.4 proposal will switch to lazy expansion of $LINENO.
+    trap "$callback" ERR
+}
+
 # === Pipeline ===
 main() {
     :
