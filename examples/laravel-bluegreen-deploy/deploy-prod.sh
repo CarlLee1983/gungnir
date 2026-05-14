@@ -170,6 +170,32 @@ compare_versions_or_exit() {
     fi
 }
 
+# resolve_target_tag — sets CURRENT_TAG and LATEST_TAG (module-level).
+# Mirrors the original L94-121 version-resolution block.
+resolve_target_tag() {
+    if [[ -n "$SPECIFIED_TAG" ]]; then
+        LATEST_TAG="$SPECIFIED_TAG"
+        return 0
+    fi
+
+    CURRENT_TAG=$(git describe --tags --abbrev=0)
+
+    ci::retry 3 git fetch origin
+    ci::retry 3 git fetch --tags
+
+    ci::require_env GIT_BRANCH || exit 1
+    ci::retry 3 git pull origin "$GIT_BRANCH"
+
+    LATEST_TAG=$(ci::git_latest_tag "$TAG_PREFIX") || exit 1
+
+    if [[ "$SKIP_VERSION_CHECK" == "false" ]]; then
+        local current_version new_version
+        current_version=$(strip_tag_prefix "$CURRENT_TAG" "$TAG_PREFIX")
+        new_version=$(strip_tag_prefix "$LATEST_TAG" "$TAG_PREFIX")
+        compare_versions_or_exit "$new_version" "$current_version"
+    fi
+}
+
 # === Pipeline ===
 main() {
     :
