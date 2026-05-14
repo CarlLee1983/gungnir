@@ -64,7 +64,7 @@ if ci::is_true SKIP_TESTS; then ...
 ## 寫入與變更
 
 ### 穩健的重試機制
-Gungnir 的 `ci::retry` 比簡單的迴圈更強大。它會保留最後一次嘗試的退出狀態，並將失敗記錄到 stderr。
+Gungnir 的 `ci::retry` 比簡單的迴圈更強大。它會保留最後一次嘗試的退出狀態，並將失敗記錄到 stderr。可加上 `--delay SECONDS` 在失敗的嘗試之間 sleep — 適用於 package registry、deploy target 等需要喘息的上游服務。
 
 **範例：不穩定的網路呼叫**
 ```bash
@@ -76,6 +76,9 @@ done
 
 # Gungnir
 ci::retry 3 curl -fsS https://api.example.com
+
+# 兩次嘗試之間相隔 30 秒（適合 registry / package manager）
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 ```
 
 ### 安全的環境檢查

@@ -64,7 +64,7 @@ if ci::is_true SKIP_TESTS; then ...
 ## Writes / mutations
 
 ### Robust Retries
-Gungnir's `ci::retry` is more powerful than a simple loop. It preserves the exit status of the final attempt and logs failures to stderr.
+Gungnir's `ci::retry` is more powerful than a simple loop. It preserves the exit status of the final attempt and logs failures to stderr. Use `--delay SECONDS` to sleep between failed attempts — useful for upstreams that need a moment to recover (package registries, deploy targets).
 
 **Example: Flaky Network Call**
 ```bash
@@ -76,6 +76,9 @@ done
 
 # Gungnir
 ci::retry 3 curl -fsS https://api.example.com
+
+# With a 30s gap between attempts (good for registries / package managers)
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 ```
 
 ### Secure Environment Checks
