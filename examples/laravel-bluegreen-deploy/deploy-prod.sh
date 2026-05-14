@@ -323,6 +323,88 @@ compute_cloudwatch_log_group() {
         "$group_id_clean" "$role_clean" "$node_id_clean"
 }
 
+# run_post_deploy_on_host — SSH heredoc post-deploy (spec §6.5 not-collected).
+#
+# The heredoc body is preserved verbatim from the original L238-289. All bash
+# vars referenced inside ($target_dir, $before_cmd, $middle_cmd, $SITE_DIR,
+# $cloudwatch_log_group_name) are interpolated by the LOCAL shell before the
+# heredoc is fed to ssh — this is intentional and matches the original.
+run_post_deploy_on_host() {
+    local host_name="$1"
+    local target_host="$2"
+    local target_dir before_cmd middle_cmd
+    local cloudwatch_node_config cloudwatch_log_group_name
+
+    set +e
+    target_dir=$(parse_blue_green_target_dir "$target_host")
+    set -e
+
+    before_cmd="${BEFORE_COMMANDS[$host_name]}"
+    middle_cmd="${MIDDLE_COMMANDS[$host_name]}"
+    cloudwatch_node_config="${CLOUDWATCH_HOST_CONFIGS[$host_name]:-1}"
+    cloudwatch_log_group_name=$(compute_cloudwatch_log_group "$host_name" "$cloudwatch_node_config")
+
+    ci::info "CloudWatch log group for ${target_host}: ${cloudwatch_log_group_name}"
+
+    ssh -i "$SSH_KEY" "$target_host" <<EOF
+cd "$target_dir"
+pwd
+eval "$before_cmd"
+eval "$middle_cmd"
+sudo ln -sfn "$target_dir" "$SITE_DIR"
+
+if [ ! -d /var/log/laravel ]; then
+    sudo mkdir -p /var/log/laravel
+    sudo chown -R root:root /var/log/laravel
+    sudo chmod -R 777 /var/log/laravel
+fi
+
+if [ -d "$target_dir/storage/logs" ] && [ ! -L "$target_dir/storage/logs" ]; then
+    sudo rm -rf "$target_dir/storage/logs"
+fi
+sudo ln -sfn /var/log/laravel "$target_dir/storage/logs"
+
+if [ "\$(readlink -f /etc/supervisor/conf.d/supervisord.conf)" != "\$(readlink -f $target_dir/supervisord.conf)" ]; then
+    sudo ln -sfn "$target_dir/supervisord.conf" "/etc/supervisor/conf.d/supervisord.conf"
+fi
+
+cd "$SITE_DIR"
+
+if [ -n "$cloudwatch_log_group_name" ]; then
+    sudo php artisan env:manage set CLOUDWATCH_LOG_GROUP_NAME "$cloudwatch_log_group_name"
+else
+    echo "WARN: CLOUDWATCH_LOG_GROUP_NAME empty; skipping env:manage set"
+fi
+
+sudo php artisan optimize:clear
+sudo php artisan config:cache
+sudo php artisan view:cache
+sudo supervisorctl update
+sudo php artisan queue:restart
+EOF
+
+    NOTIFY_MESSAGE+="部署主機 : ${target_host}\n"
+    NOTIFY_MESSAGE+="當前目錄 : ${target_dir}\n"
+}
+
+# run_multi_host_deploy — multi-host iteration (spec §6.6 not-collected).
+# Sequentially: rsync to every host, then post-deploy on every host.
+run_multi_host_deploy() {
+    local host_name target_host
+
+    for host_name in "${!TARGET_HOSTS[@]}"; do
+        target_host="${TARGET_HOSTS[$host_name]}"
+        ci::info "deploying files to host: ${target_host}"
+        deploy_files_to_host "$target_host"
+    done
+
+    for host_name in "${!TARGET_HOSTS[@]}"; do
+        target_host="${TARGET_HOSTS[$host_name]}"
+        ci::info "running post-deploy on host: ${target_host}"
+        run_post_deploy_on_host "$host_name" "$target_host"
+    done
+}
+
 # === Pipeline ===
 main() {
     :
