@@ -85,6 +85,53 @@ USAGE
     done
 }
 
+# send_slack_notification — local message template (spec §6.2 not-collected).
+# Builds the StationHub Slack template (emoji + git log diff + env/version/time)
+# and delegates the HTTP POST + retry policy to ci::slack_webhook.
+#
+# Usage: send_slack_notification STATUS MESSAGE
+#   STATUS  — "success" or anything else (treated as failure).
+#   MESSAGE — single string; may contain literal \n that Slack renders.
+send_slack_notification() {
+    local status="$1"
+    local notify_message="$2"
+    local message=""
+    local gitlogs=""
+    local current_version new_version
+
+    if [[ "$status" == "success" ]]; then
+        message+="🚀 部署完成通知\n"
+        message+="${notify_message}\n\n"
+
+        if [[ -n "$CURRENT_TAG" && -n "$LATEST_TAG" ]]; then
+            current_version=$(strip_tag_prefix "$CURRENT_TAG" "$TAG_PREFIX")
+            new_version=$(strip_tag_prefix "$LATEST_TAG" "$TAG_PREFIX")
+
+            # Direct sort -V here — ci::version_gt is still a §5.2 proposal.
+            if [[ "$(printf '%s\n' "$current_version" "$new_version" | sort -V | head -n1)" != "$new_version" ]]; then
+                message+="版本更新紀錄:\n"
+                gitlogs=$(git log "${CURRENT_TAG}..${LATEST_TAG}" --format="%h %<(100,trunc)%s" 2>/dev/null || true)
+                if [[ -n "$gitlogs" ]]; then
+                    message+="${gitlogs}\n\n"
+                else
+                    message+="無更新紀錄\n\n"
+                fi
+            fi
+        fi
+    else
+        message+="❌ 部署失敗通知\n"
+        message+="錯誤訊息: ${notify_message}\n\n"
+    fi
+
+    message+="環境: ${DEPLOY_ENV:-unset}\n"
+    message+="版本: ${LATEST_TAG}\n"
+    message+="時間: $(date '+%Y-%m-%d %H:%M:%S')"
+
+    # ci::slack_webhook handles missing-webhook + missing-curl gracefully
+    # (warns and returns 0) and retries the POST 3x on transient failure.
+    ci::slack_webhook SLACK_WEBHOOK_URL "laravel-bluegreen" "$status" "$message"
+}
+
 # === Pipeline ===
 main() {
     :
