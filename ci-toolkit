@@ -82,22 +82,52 @@ ci::require_tool() {
   return 0
 }
 
-# Retry a command N times.
+# Retry a command N times, with an optional delay between attempts.
 ci::retry() {
   local attempts="${1:-}"
   shift || true
 
   if [[ -z "$attempts" || ! "$attempts" =~ ^[0-9]+$ || "$attempts" -lt 1 ]]; then
-    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    ci::error "Usage: ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND..."
     return 64
   fi
 
+  local delay=0
+  while (( $# > 0 )); do
+    case "$1" in
+      --delay)
+        if [[ $# -lt 2 ]]; then
+          ci::error "ci::retry: --delay requires a value"
+          return 64
+        fi
+        if [[ ! "$2" =~ ^[0-9]+$ ]]; then
+          ci::error "ci::retry: --delay value must be a non-negative integer, got: $2"
+          return 64
+        fi
+        delay="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      --*)
+        ci::error "ci::retry: unknown option: $1"
+        return 64
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
   if [[ "$#" -eq 0 ]]; then
-    ci::error "Usage: ci::retry ATTEMPTS COMMAND..."
+    ci::error "Usage: ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND..."
     return 64
   fi
 
   local attempt status
+  : "$delay"
   for ((attempt = 1; attempt <= attempts; attempt++)); do
     set +e
     "$@"
