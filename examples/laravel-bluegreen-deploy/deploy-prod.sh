@@ -280,6 +280,49 @@ deploy_files_to_host() {
         "sudo chmod -R 777 $target_dir/storage; sudo chmod -R 777 $target_dir/bootstrap/cache;"
 }
 
+# sanitize_cloudwatch_token — CloudWatch naming policy (spec §6.3 not-collected).
+# Strips \r\n\t, leading/trailing whitespace, and replaces inner spaces with _.
+sanitize_cloudwatch_token() {
+    printf '%s' "${1:-}" \
+        | tr -d '\r\n\t' \
+        | sed 's/[[:space:]]*$//' \
+        | sed 's/^[[:space:]]*//' \
+        | sed 's/[[:space:]]/_/g'
+}
+
+# compute_cloudwatch_log_group — CloudWatch log-group name (spec §6.4 not-collected).
+#
+# Output: /<env>/<app>/<service>/<group_id>/<role>/<node_id>
+#
+# Inputs (env): CLOUDWATCH_ENV, CLOUDWATCH_APP, CLOUDWATCH_SERVICE,
+#               CLOUDWATCH_GROUP_ID.
+# Inputs (args):
+#   $1 — HOST_NAME (used as role fallback when NODE_CONFIG has no comma).
+#   $2 — NODE_CONFIG: either "ap,1" (role,node_id) or a plain node id.
+compute_cloudwatch_log_group() {
+    local host_name="$1"
+    local node_config="${2:-1}"
+    local env_clean app_clean service_clean group_id_clean
+    local role_clean node_id_clean
+
+    env_clean=$(sanitize_cloudwatch_token "${CLOUDWATCH_ENV:-dev}")
+    app_clean=$(sanitize_cloudwatch_token "${CLOUDWATCH_APP:-cmg}")
+    service_clean=$(sanitize_cloudwatch_token "${CLOUDWATCH_SERVICE:-station}")
+    group_id_clean=$(sanitize_cloudwatch_token "${CLOUDWATCH_GROUP_ID:-9999}")
+
+    if [[ -n "$node_config" && "$node_config" == *,* ]]; then
+        role_clean=$(sanitize_cloudwatch_token "${node_config%%,*}")
+        node_id_clean=$(sanitize_cloudwatch_token "${node_config#*,}")
+    else
+        role_clean=$(sanitize_cloudwatch_token "$host_name")
+        node_id_clean=$(sanitize_cloudwatch_token "${node_config:-1}")
+    fi
+
+    printf '/%s/%s/%s/%s/%s/%s\n' \
+        "$env_clean" "$app_clean" "$service_clean" \
+        "$group_id_clean" "$role_clean" "$node_id_clean"
+}
+
 # === Pipeline ===
 main() {
     :
