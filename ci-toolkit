@@ -4,7 +4,7 @@
 # Usage as source: source ./ci-toolkit && ci::info "message"
 # Runtime: Bash 4+
 
-CI_TOOLKIT_VERSION="0.1.1"
+CI_TOOLKIT_VERSION="0.1.2"
 CI_TOOLKIT_NAME="ci-toolkit"
 
 ci::log() {
@@ -102,7 +102,22 @@ ci::retry() {
 
   return "$status"
 }
-
+ 
+ci::env_default() {
+  local name="${1:-}"
+  local default="${2:-}"
+ 
+  if [[ -z "$name" ]]; then
+    ci::error "Usage: ci::env_default VAR_NAME DEFAULT_VALUE"
+    return 64
+  fi
+ 
+  if [[ -z "${!name+x}" || -z "${!name}" ]]; then
+    printf -v "$name" "%s" "$default"
+    ci::debug "set default: $name=$default"
+  fi
+}
+ 
 ci::find_up() {
   local marker="${1:-}"
   local dir
@@ -183,6 +198,7 @@ Usage:
   ci-toolkit version
   ci-toolkit log <info|warn|error|debug> <message>
   ci-toolkit env require VAR_NAME
+  ci-toolkit env default VAR_NAME DEFAULT_VALUE
   ci-toolkit tool require TOOL_NAME
   ci-toolkit retry [ATTEMPTS] -- COMMAND [ARGS...]
   ci-toolkit git latest-tag [PREFIX]
@@ -226,6 +242,20 @@ ci::cmd_env() {
   case "$subcommand" in
     require)
       ci::require_env "${1:-}"
+      ;;
+    default)
+      local name="${1:-}"
+      local default="${2:-}"
+      if [[ -z "$name" ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      # In CLI mode, we just print the value or default
+      if [[ -z "${!name+x}" || -z "${!name}" ]]; then
+        printf '%s\n' "$default"
+      else
+        printf '%s\n' "${!name}"
+      fi
       ;;
     *)
       ci::usage >&2

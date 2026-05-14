@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.1/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.2/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -105,6 +105,7 @@ mismatching symlink at the destination.
 | `version`, `--version` | Print `ci-toolkit <version>` to stdout. |
 | `log <info\|warn\|error\|debug> <message>` | Write a structured log line to **stderr**. `debug` is silent unless `CI_TOOLKIT_DEBUG=1`. |
 | `env require VAR_NAME` | Exit `1` if the environment variable is unset or empty. The variable's value is never printed. |
+| `env default VAR_NAME DEFAULT` | Print the value of `VAR_NAME`, or `DEFAULT` if it is unset or empty. |
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
 | `retry -- COMMAND [ARGS...]` | Run `COMMAND` up to 3 times until it returns `0`. Returns the last attempt's exit status. |
 | `retry ATTEMPTS -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times. `ATTEMPTS` must be a positive integer. |
@@ -133,6 +134,7 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | Function | Description |
 | --- | --- |
 | `ci::require_env VAR_NAME` | Return `1` if `VAR_NAME` is unset or empty. The value is never printed; only the name appears in the error message. |
+| `ci::env_default VAR_NAME DEFAULT` | Set `VAR_NAME` to `DEFAULT` in the current shell if it is unset or empty. |
 | `ci::require_tool TOOL_NAME` | Return `1` if `TOOL_NAME` is not resolvable via `command -v`. |
 
 ### Flow control
