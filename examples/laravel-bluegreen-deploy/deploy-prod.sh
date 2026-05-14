@@ -246,6 +246,40 @@ parse_blue_green_target_dir() {
     fi
 }
 
+# deploy_files_to_host — per-host blue/green rsync (spec §6.8 not-collected).
+#
+# Side effect: prints "deploying to ..." progress via ci::info, sets a local
+# TARGET_DIR for the caller-printed log line, and rsyncs the working tree.
+deploy_files_to_host() {
+    local host="$1"
+    local target_dir status
+
+    set +e
+    target_dir=$(parse_blue_green_target_dir "$host")
+    status=$?
+    set -e
+
+    if [[ "$status" -eq 2 ]]; then
+        ci::info "no existing blue/green symlink on $host — bootstrapping"
+        ssh -i "$SSH_KEY" "$host" "sudo mkdir -p $BLUE_DIR $GREEN_DIR"
+    fi
+
+    ci::info "syncing to $target_dir on $host"
+
+    if ssh -i "$SSH_KEY" "$host" "[ ! -d $target_dir/storage ]"; then
+        rsync -az --delete --exclude=".git" \
+            --rsync-path="sudo rsync" -e "ssh -i $SSH_KEY" \
+            ./ "$host:$target_dir/"
+    else
+        rsync -az --delete --exclude=".git" --exclude="storage" \
+            --rsync-path="sudo rsync" -e "ssh -i $SSH_KEY" \
+            ./ "$host:$target_dir/"
+    fi
+
+    ssh -i "$SSH_KEY" "$host" \
+        "sudo chmod -R 777 $target_dir/storage; sudo chmod -R 777 $target_dir/bootstrap/cache;"
+}
+
 # === Pipeline ===
 main() {
     :
