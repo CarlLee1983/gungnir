@@ -89,8 +89,8 @@ parse_cli() {
 # ==============================================================================
 
 is_project_root() {
-    local dir="$1"
-    [ -d "$dir/.git" ] && [ -f "$dir/$HOOK_BUILD" ]
+    local dir=$1
+    [[ -d $dir/.git && -f $dir/$HOOK_BUILD ]]
 }
 
 resolve_repo_root() {
@@ -98,15 +98,15 @@ resolve_repo_root() {
     dir=$(cd "$1" && pwd)
     while true; do
         if is_project_root "$dir"; then printf '%s\n' "$dir"; return 0; fi
-        [ "$dir" = "/" ] && return 1
+        [[ $dir == "/" ]] && return 1
         dir=$(cd "$dir/.." && pwd)
     done
 }
 
 discover_build_repo() {
     local resolved
-    if [ -n "${BUILD_REPO:-}" ]; then return 0; fi
-    if [ "${1:-}" != "" ] && [ -d "$1" ]; then
+    if [[ -n ${BUILD_REPO:-} ]]; then return 0; fi
+    if [[ ${1:-} != "" && -d $1 ]]; then
         BUILD_REPO=$(cd "$1" && pwd); return 0
     fi
     if is_project_root "$BUILD_REPO_DEFAULT"; then
@@ -118,8 +118,8 @@ discover_build_repo() {
 }
 
 assert_repo_layout() {
-    [ -d "$BUILD_REPO/.git" ] || { ci::die "not a git repo: $BUILD_REPO"; exit 1; }
-    [ -f "$BUILD_REPO/$HOOK_BUILD" ] || { ci::die "build hook missing: $BUILD_REPO/$HOOK_BUILD"; exit 1; }
+    [[ -d $BUILD_REPO/.git ]] || { ci::die "not a git repo: $BUILD_REPO"; exit 1; }
+    [[ -f $BUILD_REPO/$HOOK_BUILD ]] || { ci::die "build hook missing: $BUILD_REPO/$HOOK_BUILD"; exit 1; }
 }
 
 # ==============================================================================
@@ -140,7 +140,7 @@ fetch_origin() {
 }
 
 fetch_tags_for_prefix_best_effort() {
-    [ -n "${GIT_TAG_PREFIX:-}" ] || return 0
+    [[ -n ${GIT_TAG_PREFIX:-} ]] || return 0
     ci::info "git fetch tags (prefix: ${GIT_TAG_PREFIX})"
     if ! ci::retry 3 git fetch origin \
             "refs/tags/${GIT_TAG_PREFIX}*:refs/tags/${GIT_TAG_PREFIX}*" --quiet 2>/dev/null; then
@@ -149,7 +149,7 @@ fetch_tags_for_prefix_best_effort() {
 }
 
 checkout_latest_matching_tag() {
-    [ -n "${GIT_TAG_PREFIX:-}" ] \
+    [[ -n ${GIT_TAG_PREFIX:-} ]] \
         || { ci::die "BUILD_CHECKOUT_LATEST_TAG=1 requires GIT_TAG_PREFIX (e.g. release-v)"; exit 1; }
 
     ci::retry 3 git fetch origin --tags --quiet 2>/dev/null || true
@@ -195,8 +195,8 @@ run_build_hook() {
 validate_deploy_user_host() {
     local target="$1" user host
     [[ "$target" == *"@"* ]] || { ci::die "deploy target must be user@host: $target"; exit 1; }
-    host="${target#*@}"; user="${target%%@*}"
-    [ -n "$host" ] && [ -n "$user" ] \
+    host=${target#*@}; user=${target%%@*}
+    [[ -n $host && -n $user ]] \
         || { ci::die "cannot parse user@host: $target"; exit 1; }
     [[ "$user" =~ ^[a-zA-Z0-9._-]+$ ]] \
         || { ci::die "DEPLOY_USER format invalid: $user (from $target)"; exit 1; }
@@ -206,22 +206,22 @@ validate_deploy_user_host() {
 
 assert_deploy_ssh_key_readable() {
     ci::env_default DEPLOY_SSH_KEY "$HOME/.ssh/my_deploy_key.pem"
-    local key="$DEPLOY_SSH_KEY"
-    [ -f "$key" ] || { ci::die "SSH key not found: $key"; exit 1; }
-    [ -r "$key" ] || { ci::die "SSH key not readable: $key"; exit 1; }
-    export DEPLOY_SSH_KEY="$key"
+    local key=$DEPLOY_SSH_KEY
+    [[ -f $key ]] || { ci::die "SSH key not found: $key"; exit 1; }
+    [[ -r $key ]] || { ci::die "SSH key not readable: $key"; exit 1; }
+    export DEPLOY_SSH_KEY=$key
 }
 
 assert_deploy_service_name_if_set() {
-    [ -z "${DEPLOY_SERVICE_NAME:-}" ] && return 0
-    [[ "${DEPLOY_SERVICE_NAME}" =~ ^[a-zA-Z0-9._-]+$ ]] \
-        || { ci::die "DEPLOY_SERVICE_NAME format invalid: ${DEPLOY_SERVICE_NAME}"; exit 1; }
+    [[ -z ${DEPLOY_SERVICE_NAME:-} ]] && return 0
+    [[ $DEPLOY_SERVICE_NAME =~ ^[a-zA-Z0-9._-]+$ ]] \
+        || { ci::die "DEPLOY_SERVICE_NAME format invalid: $DEPLOY_SERVICE_NAME"; exit 1; }
 }
 
 run_sync_env_to_shared_if_requested() {
     ci::is_true SYNC_ENV_TO_SHARED || return 0
-    local sync_script="$BUILD_REPO/$HOOK_SYNC"
-    [ -f "$sync_script" ] || { ci::die "SYNC_ENV_TO_SHARED=1 but $sync_script not found"; exit 1; }
+    local sync_script=$BUILD_REPO/$HOOK_SYNC
+    [[ -f $sync_script ]] || { ci::die "SYNC_ENV_TO_SHARED=1 but $sync_script not found"; exit 1; }
     ci::info "sync env: $HOOK_SYNC → ${DEPLOY_USER}@${DEPLOY_HOST}"
     "$sync_script"
 }
@@ -234,28 +234,28 @@ run_deploy_hooks() {
 
     assert_deploy_ssh_key_readable
     assert_deploy_service_name_if_set
-    [ -n "${DEPLOY_RELEASE_RETAIN_COUNT+x}" ] && export DEPLOY_RELEASE_RETAIN_COUNT
+    [[ -n ${DEPLOY_RELEASE_RETAIN_COUNT+x} ]] && export DEPLOY_RELEASE_RETAIN_COUNT
 
     if ci::is_true DEPLOY_DRY_RUN_FLAG; then
         export DEPLOY_DRY_RUN=1
         ci::info "deploy dry-run (DEPLOY_DRY_RUN=1)"
     fi
 
-    local deploy_script="$BUILD_REPO/$HOOK_DEPLOY"
-    [ -f "$deploy_script" ] || { ci::die "deploy script missing: $deploy_script"; exit 1; }
+    local deploy_script=$BUILD_REPO/$HOOK_DEPLOY
+    [[ -f $deploy_script ]] || { ci::die "deploy script missing: $deploy_script"; exit 1; }
 
     DEPLOY_RAN=1
 
-    if [ -n "${DEPLOY_TARGETS:-}" ]; then
+    if [[ -n ${DEPLOY_TARGETS:-} ]]; then
         local -a target_list
         read -ra target_list <<< "${DEPLOY_TARGETS}"
-        [ "${#target_list[@]}" -gt 0 ] \
+        [[ ${#target_list[@]} -gt 0 ]] \
             || { ci::die "DO_DEPLOY=1 but DEPLOY_TARGETS is blank"; exit 1; }
         for target in "${target_list[@]}"; do
-            [ -n "$target" ] || continue
+            [[ -n $target ]] || continue
             validate_deploy_user_host "$target"
-            export DEPLOY_USER="${target%%@*}"
-            export DEPLOY_HOST="${target#*@}"
+            export DEPLOY_USER=${target%%@*}
+            export DEPLOY_HOST=${target#*@}
             run_sync_env_to_shared_if_requested
             ci::info "deploy: $HOOK_DEPLOY → ${DEPLOY_USER}@${DEPLOY_HOST}"
             "$deploy_script"
