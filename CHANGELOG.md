@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.4 - Added Toolkit Self-Documentation
+
+- Added `ci::ls` helper to list all available public functions and their descriptions.
+- Added `ls` CLI command for quick toolkit discovery.
+- Added standardized documentation comments to all core functions.
+
 ## v0.1.3 - Added Semantic Boolean Helper
  
 - Added `ci::is_true` helper to check if an environment variable is "1" or "true".
