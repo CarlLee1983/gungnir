@@ -65,8 +65,8 @@ USAGE
 
 parse_cli() {
     local -a rest=()
-    DEPLOY_DRY_RUN_FLAG="${DEPLOY_DRY_RUN_FLAG:-0}"
-    BUILD_SKIP_VERIFY="${BUILD_SKIP_VERIFY:-0}"
+    ci::env_default DEPLOY_DRY_RUN_FLAG 0
+    ci::env_default BUILD_SKIP_VERIFY 0
 
     while [ $# -gt 0 ]; do
         case "$1" in

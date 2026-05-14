@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.2 - Added Environment Defaulting
+
+- Added `ci::env_default` helper to provide semantic defaults for environment variables.
+- Added `env default` CLI command to print variable values or fallbacks.
+
 ## v0.1.1 - Added Git and Slack helpers
 
 - Added `ci::git_latest_tag` helper to find the latest version tag by prefix.
