@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.3 - Added Semantic Boolean Helper
+ 
+- Added `ci::is_true` helper to check if an environment variable is "1" or "true".
+ 
 ## v0.1.2 - Added Environment Defaulting
 
 - Added `ci::env_default` helper to provide semantic defaults for environment variables.

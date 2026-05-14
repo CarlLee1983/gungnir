@@ -4,7 +4,7 @@
 # Usage as source: source ./ci-toolkit && ci::info "message"
 # Runtime: Bash 4+
 
-CI_TOOLKIT_VERSION="0.1.2"
+CI_TOOLKIT_VERSION="0.1.3"
 CI_TOOLKIT_NAME="ci-toolkit"
 
 ci::log() {
@@ -12,8 +12,10 @@ ci::log() {
   shift || true
   local message="$*"
 
-  if [[ "$level" == "debug" && "${CI_TOOLKIT_DEBUG:-}" != "1" ]]; then
-    return 0
+  if [[ "$level" == "debug" ]]; then
+    if ! ci::is_true CI_TOOLKIT_DEBUG; then
+      return 0
+    fi
   fi
 
   printf '[%s] %s\n' "$level" "$message" >&2
@@ -116,6 +118,15 @@ ci::env_default() {
     printf -v "$name" "%s" "$default"
     ci::debug "set default: $name=$default"
   fi
+}
+ 
+ci::is_true() {
+  local name="${1:-}"
+  if [[ -z "$name" ]]; then
+    ci::error "Usage: ci::is_true VAR_NAME"
+    return 64
+  fi
+  [[ "${!name:-0}" == "1" || "${!name:-}" == "true" ]]
 }
  
 ci::find_up() {

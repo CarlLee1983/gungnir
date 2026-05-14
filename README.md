@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.2/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.3/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -135,6 +135,7 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | --- | --- |
 | `ci::require_env VAR_NAME` | Return `1` if `VAR_NAME` is unset or empty. The value is never printed; only the name appears in the error message. |
 | `ci::env_default VAR_NAME DEFAULT` | Set `VAR_NAME` to `DEFAULT` in the current shell if it is unset or empty. |
+| `ci::is_true VAR_NAME` | Return `0` if variable is `1` or `true`. |
 | `ci::require_tool TOOL_NAME` | Return `1` if `TOOL_NAME` is not resolvable via `command -v`. |
 
 ### Flow control

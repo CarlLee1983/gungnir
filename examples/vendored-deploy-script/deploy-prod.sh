@@ -127,7 +127,7 @@ assert_repo_layout() {
 # ==============================================================================
 
 require_branch_unless_tag_mode() {
-    if [ "${BUILD_CHECKOUT_LATEST_TAG:-0}" = "1" ]; then return 0; fi
+    if ci::is_true BUILD_CHECKOUT_LATEST_TAG; then return 0; fi
     ci::require_env BUILD_BRANCH || {
         ci::error "to deploy from a tag instead, set BUILD_CHECKOUT_LATEST_TAG=1 and GIT_TAG_PREFIX"
         exit 1
@@ -171,7 +171,7 @@ checkout_branch_and_pull() {
 }
 
 sync_git_ref() {
-    if [ "${BUILD_CHECKOUT_LATEST_TAG:-0}" = "1" ]; then
+    if ci::is_true BUILD_CHECKOUT_LATEST_TAG; then
         checkout_latest_matching_tag
     else
         checkout_branch_and_pull
@@ -183,7 +183,7 @@ sync_git_ref() {
 # ==============================================================================
 
 run_build_hook() {
-    if [ "${BUILD_SKIP_VERIFY:-0}" = "1" ]; then
+    if ci::is_true BUILD_SKIP_VERIFY; then
         ci::info "build: $HOOK_BUILD --skip-verify"
         "$BUILD_REPO/$HOOK_BUILD" --skip-verify
     else
@@ -219,7 +219,7 @@ assert_deploy_service_name_if_set() {
 }
 
 run_sync_env_to_shared_if_requested() {
-    [ "${SYNC_ENV_TO_SHARED:-0}" = "1" ] || return 0
+    ci::is_true SYNC_ENV_TO_SHARED || return 0
     local sync_script="$BUILD_REPO/$HOOK_SYNC"
     [ -f "$sync_script" ] || { ci::die "SYNC_ENV_TO_SHARED=1 but $sync_script not found"; exit 1; }
     ci::info "sync env: $HOOK_SYNC → ${DEPLOY_USER}@${DEPLOY_HOST}"
@@ -227,7 +227,7 @@ run_sync_env_to_shared_if_requested() {
 }
 
 run_deploy_hooks() {
-    if [ "${DO_DEPLOY:-0}" != "1" ]; then
+    if ! ci::is_true DO_DEPLOY; then
         ci::info "skip deploy (set DO_DEPLOY=1 to enable)"
         return 0
     fi
@@ -236,7 +236,7 @@ run_deploy_hooks() {
     assert_deploy_service_name_if_set
     [ -n "${DEPLOY_RELEASE_RETAIN_COUNT+x}" ] && export DEPLOY_RELEASE_RETAIN_COUNT
 
-    if [ "${DEPLOY_DRY_RUN_FLAG:-0}" = "1" ]; then
+    if ci::is_true DEPLOY_DRY_RUN_FLAG; then
         export DEPLOY_DRY_RUN=1
         ci::info "deploy dry-run (DEPLOY_DRY_RUN=1)"
     fi
@@ -300,7 +300,7 @@ main() {
     run_build_hook
     run_deploy_hooks
 
-    if [ "${DEPLOY_RAN:-0}" = "1" ]; then
+    if ci::is_true DEPLOY_RAN; then
         ci::env_default SLACK_PROJECT_NAME "my-app"
         ci::slack_webhook SLACK_WEBHOOK_URL "$SLACK_PROJECT_NAME" "success" "Build and deploy completed successfully."
     fi
