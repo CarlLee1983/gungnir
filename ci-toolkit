@@ -296,7 +296,7 @@ Usage:
   ci-toolkit env require VAR_NAME
   ci-toolkit env default VAR_NAME DEFAULT_VALUE
   ci-toolkit tool require TOOL_NAME
-  ci-toolkit retry [ATTEMPTS] -- COMMAND [ARGS...]
+  ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]
   ci-toolkit git latest-tag [PREFIX]
   ci-toolkit slack webhook URL_VAR PROJECT STATUS MESSAGE
   ci-toolkit ls
