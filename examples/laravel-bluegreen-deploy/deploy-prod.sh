@@ -13,8 +13,19 @@
 #
 # See README.md for the substitution table and adoption steps.
 
+# shellcheck disable=SC2154
+# Reason: these variables are supplied by an outer wrapper (see README §1):
+#   PROJECT_DIR, GIT_BRANCH, DEPLOY_ENV, SLACK_WEBHOOK_URL,
+#   TARGET_HOSTS, BEFORE_COMMANDS, MIDDLE_COMMANDS, CLOUDWATCH_HOST_CONFIGS,
+#   CLOUDWATCH_ENV, CLOUDWATCH_APP, CLOUDWATCH_SERVICE, CLOUDWATCH_GROUP_ID
+# ShellCheck cannot see the wrapper, so silence SC2154 file-wide.
 set -euo pipefail
 
+# shellcheck disable=SC2155
+# Reason: the `cd ... && pwd` invocation cannot fail under normal conditions
+# (the script directory always exists when BASH_SOURCE is set); separating
+# the declaration would not improve safety here and the single-line form
+# matches the convention used by the other examples in this repo.
 readonly SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # shellcheck source=./ci-toolkit
@@ -65,6 +76,10 @@ parse_cli() {
                 shift
                 ;;
             --cloudwatch)
+                # shellcheck disable=SC2034
+                # Reason: ENABLE_CLOUDWATCH is read by `ci::is_true ENABLE_CLOUDWATCH`
+                # in run_cloudwatch_setup (indirect variable expansion via ${!name});
+                # ShellCheck cannot follow that, so the assignment looks unused.
                 ENABLE_CLOUDWATCH=true
                 shift
                 ;;
@@ -346,6 +361,12 @@ run_post_deploy_on_host() {
 
     ci::info "CloudWatch log group for ${target_host}: ${cloudwatch_log_group_name}"
 
+    # shellcheck disable=SC2087
+    # Reason: unquoted EOF is intentional — local-side expansion of
+    # $target_dir / $before_cmd / $middle_cmd / $SITE_DIR /
+    # $cloudwatch_log_group_name is the documented contract of this heredoc
+    # (mirrors the original StationHub script L238). Tokens that must run on
+    # the remote side are escaped with `\$(...)`.
     ssh -i "$SSH_KEY" "$target_host" <<EOF
 cd "$target_dir"
 pwd
@@ -444,6 +465,10 @@ run_cloudwatch_setup() {
 main() {
     parse_cli "$@"
 
+    # shellcheck disable=SC2016
+    # Reason: single-quoted callback is intentional — $LINENO must be
+    # expanded LAZILY when the ERR trap fires, not eagerly when
+    # compose_err_trap is called.
     compose_err_trap 'send_slack_notification "failed" "Script failed at line $LINENO"'
 
     ci::require_env PROJECT_DIR || exit 1
