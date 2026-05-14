@@ -442,7 +442,27 @@ run_cloudwatch_setup() {
 
 # === Pipeline ===
 main() {
-    :
+    parse_cli "$@"
+
+    compose_err_trap 'send_slack_notification "failed" "Script failed at line $LINENO"'
+
+    ci::require_env PROJECT_DIR || exit 1
+    cd "$PROJECT_DIR"
+
+    resolve_target_tag
+    ci::info "deploying tag: $LATEST_TAG"
+    git checkout "$LATEST_TAG"
+
+    run_composer_install
+    run_npm_build
+
+    run_multi_host_deploy
+
+    ci::info "all deployments completed successfully"
+
+    run_cloudwatch_setup
+
+    send_slack_notification "success" "$NOTIFY_MESSAGE"
 }
 
 main "$@"
