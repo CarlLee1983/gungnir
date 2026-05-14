@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.3/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -111,6 +111,7 @@ mismatching symlink at the destination.
 | `retry ATTEMPTS -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times. `ATTEMPTS` must be a positive integer. |
 | `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. |
 | `slack webhook VAR PROJECT STATUS MSG` | Send a notification to Slack using the URL stored in `VAR`. |
+| `ls` | List all available `ci::` functions and their descriptions. |
 
 Unknown commands or malformed arguments exit `64` and print usage to stderr.
 
@@ -152,6 +153,7 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | `ci::root` | Equivalent to `ci::find_up .git`. |
 | `ci::git_latest_tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` to **stdout**. Returns `1` if no match. |
 | `ci::slack_webhook VAR PROJ STAT MSG` | Send a best-effort Slack notification. Skips gracefully if `VAR` is unset or `curl` is missing. |
+| `ci::ls` | Print all available `ci::` functions and their descriptions to **stdout**. |
 
 ## Exit codes
 
@@ -196,7 +198,7 @@ bash tests/test_retry_and_paths.sh
 
 Follow the file's section flow:
 
-1. **Library function** — add `ci::your_feature` in the library section. Return status codes; do not `exit`.
+1. **Library function** — add `ci::your_feature` in the library section. Return status codes; do not `exit`. Include a `# @description` comment above the function.
 2. **Command wrapper** — add `ci::cmd_your_feature` that adapts argv, returning `64` on usage errors.
 3. **Dispatch arm** — register the command in `ci::dispatch`'s `case` statement.
 4. **Usage** — update `ci::usage` so `ci-toolkit help` lists the new command.

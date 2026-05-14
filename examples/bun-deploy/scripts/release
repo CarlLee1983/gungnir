@@ -7,8 +7,19 @@ cd "$PROJECT_ROOT"
 # shellcheck source=../ci-toolkit
 source ./ci-toolkit
 
-ci::info "=== release pipeline start ==="
-./scripts/check
-./scripts/build
-./scripts/deploy
-ci::info "=== release pipeline done ==="
+# @description Run the end-to-end release pipeline
+run_pipeline() {
+    ci::info "=== release pipeline start ==="
+    
+    ./scripts/check
+    ./scripts/build
+    ./scripts/deploy
+    
+    ci::info "=== release pipeline done ==="
+}
+
+main() {
+    run_pipeline
+}
+
+main "$@"

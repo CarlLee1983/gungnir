@@ -7,19 +7,28 @@ cd "$PROJECT_ROOT"
 # shellcheck source=../ci-toolkit
 source ./ci-toolkit
 
-ci::info "checking preconditions"
+# @description Validate all tools and environment variables
+run_checks() {
+    ci::info "checking preconditions"
 
-# Tools needed for build (always).
-for tool in bun; do
-  ci::require_tool "$tool" || exit 1
-done
+    # Tools needed for build (always).
+    ci::require_tool bun || return 1
 
-# Tools and env needed for deploy (only when actually deploying).
-if [[ "${RUN_DEPLOY:-1}" == "1" ]]; then
-  ci::require_tool docker || exit 1
-  for var in IMAGE_TAG REGISTRY_URL REGISTRY_TOKEN; do
-    ci::require_env "$var" || exit 1
-  done
-fi
+    # Tools and env needed for deploy (only when actually deploying).
+    ci::env_default RUN_DEPLOY "1"
+    if ci::is_true RUN_DEPLOY; then
+        ci::require_tool docker || return 1
+        local vars=(IMAGE_TAG REGISTRY_URL REGISTRY_TOKEN)
+        for var in "${vars[@]}"; do
+            ci::require_env "$var" || return 1
+        done
+    fi
 
-ci::info "preconditions ok"
+    ci::info "preconditions ok"
+}
+
+main() {
+    run_checks
+}
+
+main "$@"

@@ -7,16 +7,25 @@ cd "$PROJECT_ROOT"
 # shellcheck source=../ci-toolkit
 source ./ci-toolkit
 
-ci::info "installing dependencies"
-# bun install hits the registry; flaky networks deserve a retry.
-ci::retry 3 bun install
+# @description Run the full build pipeline
+run_build() {
+    ci::info "installing dependencies"
+    # bun install hits the registry; flaky networks deserve a retry.
+    ci::retry 3 bun install
 
-ci::info "running tests"
-# Tests should NOT be retried — flake means a bug to surface, not hide.
-bun test
+    ci::info "running tests"
+    # Tests should NOT be retried — flake means a bug to surface, not hide.
+    bun test
 
-ci::info "building production bundle"
-# A failing build is deterministic; no retry needed.
-bun run build
+    ci::info "building production bundle"
+    # A failing build is deterministic; no retry needed.
+    bun run build
 
-ci::info "build done — outputs in ./dist"
+    ci::info "build done — outputs in ./dist"
+}
+
+main() {
+    run_build
+}
+
+main "$@"
