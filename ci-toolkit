@@ -251,6 +251,14 @@ ci::strip_prefix() {
   printf '%s\n' "${value#"$prefix"}"
 }
 
+# @description Install a default ERR trap that prints exit code, file:line, function, and BASH_COMMAND.
+ci::trap_err() {
+  set -E
+  # shellcheck disable=SC2016  # variables expand at trap time, not now
+  trap 'printf "[error] command failed (exit=%s) at %s:%s in %s: %s\n" \
+    "$?" "${BASH_SOURCE[0]}" "${LINENO}" "${FUNCNAME[0]:-main}" "${BASH_COMMAND}" >&2' ERR
+}
+
 # @description Send a notification to a Slack webhook.
 ci::slack_webhook() {
   local url_var="${1:-}"
@@ -326,6 +334,7 @@ Usage:
   ci-toolkit env require VAR_NAME
   ci-toolkit env default VAR_NAME DEFAULT_VALUE
   ci-toolkit strip-prefix PREFIX STRING
+  ci-toolkit trap-err
   ci-toolkit tool require TOOL_NAME
   ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]
   ci-toolkit git latest-tag [PREFIX]
@@ -510,6 +519,11 @@ ci::cmd_strip_prefix() {
   ci::strip_prefix "$1" "$2"
 }
 
+ci::cmd_trap_err() {
+  ci::error "ci::trap_err: only effective in source mode (use: source ci-toolkit && ci::trap_err)"
+  return 64
+}
+
 ci::dispatch() {
   local command="${1:-help}"
   if [[ "$#" -gt 0 ]]; then
@@ -546,6 +560,9 @@ ci::dispatch() {
       ;;
     strip-prefix)
       ci::cmd_strip_prefix "$@"
+      ;;
+    trap-err)
+      ci::cmd_trap_err "$@"
       ;;
     *)
       ci::usage >&2
