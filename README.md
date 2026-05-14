@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```

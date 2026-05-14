@@ -13,7 +13,7 @@ Gungnir is an experimental, platform-neutral Bash toolkit designed to simplify C
 Install the `ci-toolkit` artifact directly in your CI environment using `curl` and `chmod`. We recommend pinning to a specific release tag for stability:
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```

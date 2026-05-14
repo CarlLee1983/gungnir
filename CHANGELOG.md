@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5 - Added retry delay
+
+- Added `--delay SECONDS` flag to `ci::retry` (source mode) and `ci-toolkit retry` (CLI mode). Sleeps between failed attempts only; never before the first attempt and never after the last.
+- Preserves every existing call site's behavior. `--delay 0` and the omit-`--delay` path emit identical syscalls.
+- Retrofitted `examples/laravel-bluegreen-deploy/run_composer_install` to use `ci::retry 2 --delay 30 -- composer install ...`.
+
 ## v0.1.4 - Added Toolkit Self-Documentation
 
 - Added `ci::ls` helper to list all available public functions and their descriptions.
