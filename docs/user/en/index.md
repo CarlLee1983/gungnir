@@ -102,6 +102,52 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
 REPO_ROOT=$(ci::root)
 ```
 
+### Version-style Comparison
+
+For comparing semver-ish strings (tool versions, git tags) without writing brittle lexicographic `[[ "$a" > "$b" ]]` checks. Backed by `sort -V`.
+
+```bash
+# Source mode
+if ci::version_ge "$BUN_VERSION" "1.1.0"; then
+  ci::info "bun is new enough"
+fi
+
+# CLI mode
+./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
+./ci-toolkit version ge 1.2.3 1.2.3   # exits 0
+```
+
+The helpers accept `vX.Y.Z`, `X.Y.Z`, `X.Y`, and simple pre-release tags. Build metadata (`1.0.0+build42`) sorts lexicographically by the tail — fine for CI, not a SemVer-2.0 promise.
+
+### Prefix stripping
+
+A small wrapper around Bash's `${var#prefix}` that also works from CLI pipelines and treats glob characters literally.
+
+```bash
+# Source mode
+TAG=$(ci::git_latest_tag v)
+VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
+
+# CLI mode
+./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3
+```
+
+If the prefix is absent, the original string is returned unchanged.
+
+### Default ERR trap
+
+`ci::trap_err` installs a one-line ERR trap so failures inside CI scripts report `exit code`, `file:line`, function name, and the failing `BASH_COMMAND`. Source mode only — the CLI form is informational.
+
+```bash
+source ./ci-toolkit
+ci::trap_err
+
+# Anywhere below, a failing command prints:
+# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."
+```
+
+It enables `set -E` (errtrace) so the trap propagates into functions, but leaves `set -e/-u/pipefail` alone — your script keeps its existing flow control. A second `ci::trap_err` call replaces the first (standard Bash `trap` semantics).
+
 <!-- doc-key: diagnostics-recovery -->
 ## Diagnostics / recovery
 

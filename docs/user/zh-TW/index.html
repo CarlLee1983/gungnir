@@ -223,6 +223,37 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
 # Gungnir (動態搜尋，從任何子目錄皆可運作)
 REPO_ROOT=$(ci::root)</code></pre>
             </div>
+
+            <h3 class="mt-12">版本字串比較</h3>
+            <p>用於比較類 semver 字串（工具版本、git tag）時，無須再手刻容易出錯的字典序檢查 <code>[[ "$a" &gt; "$b" ]]</code>。底層使用 <code>sort -V</code>。</p>
+            <pre><code># Source 模式
+if ci::version_ge "$BUN_VERSION" "1.1.0"; then
+  ci::info "bun is new enough"
+fi
+
+# CLI 模式
+./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
+./ci-toolkit version ge 1.2.3 1.2.3   # exits 0</code></pre>
+            <p>這兩個輔助函式可接受 <code>vX.Y.Z</code>、<code>X.Y.Z</code>、<code>X.Y</code> 以及簡單的 pre-release tag。build metadata（如 <code>1.0.0+build42</code>）會以字典序比較其尾段 — 對 CI 場景已夠用，但不等同於 SemVer 2.0 嚴格規範。</p>
+
+            <h3 class="mt-12">字串前綴移除</h3>
+            <p><code>${var#prefix}</code> 的小型包裝，CLI 模式同樣可用，且會將 glob 字元視為字面值。</p>
+            <pre><code># Source 模式
+TAG=$(ci::git_latest_tag v)
+VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
+
+# CLI 模式
+./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
+            <p>若前綴不存在，原字串會原封不動回傳。</p>
+
+            <h3 class="mt-12">預設 ERR 陷阱</h3>
+            <p><code>ci::trap_err</code> 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 <code>exit code</code>、<code>file:line</code>、函式名稱與失敗的 <code>BASH_COMMAND</code>。僅在 source 模式生效 — CLI 形式只是說明用途。</p>
+            <pre><code>source ./ci-toolkit
+ci::trap_err
+
+# 之後任何失敗的指令都會印出：
+# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."</code></pre>
+            <p>它會啟用 <code>set -E</code>（errtrace），讓 trap 可傳播進入函式內部，但不會動 <code>set -e/-u/pipefail</code> — 您原本的流程控制完全保留。第二次呼叫 <code>ci::trap_err</code> 會直接取代前一次（Bash <code>trap</code> 標準語意）。</p>
         </section>
 
         <!-- doc-key: diagnostics-recovery -->

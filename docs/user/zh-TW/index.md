@@ -102,6 +102,52 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
 REPO_ROOT=$(ci::root)
 ```
 
+### 版本字串比較
+
+用於比較類 semver 字串（工具版本、git tag）時，無須再手刻容易出錯的字典序檢查 `[[ "$a" > "$b" ]]`。底層使用 `sort -V`。
+
+```bash
+# Source 模式
+if ci::version_ge "$BUN_VERSION" "1.1.0"; then
+  ci::info "bun is new enough"
+fi
+
+# CLI 模式
+./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
+./ci-toolkit version ge 1.2.3 1.2.3   # exits 0
+```
+
+這兩個輔助函式可接受 `vX.Y.Z`、`X.Y.Z`、`X.Y` 以及簡單的 pre-release tag。build metadata（如 `1.0.0+build42`）會以字典序比較其尾段 — 對 CI 場景已夠用，但不等同於 SemVer 2.0 嚴格規範。
+
+### 字串前綴移除
+
+`${var#prefix}` 的小型包裝，CLI 模式同樣可用，且會將 glob 字元視為字面值。
+
+```bash
+# Source 模式
+TAG=$(ci::git_latest_tag v)
+VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
+
+# CLI 模式
+./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3
+```
+
+若前綴不存在，原字串會原封不動回傳。
+
+### 預設 ERR 陷阱
+
+`ci::trap_err` 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 `exit code`、`file:line`、函式名稱與失敗的 `BASH_COMMAND`。僅在 source 模式生效 — CLI 形式只是說明用途。
+
+```bash
+source ./ci-toolkit
+ci::trap_err
+
+# 之後任何失敗的指令都會印出：
+# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."
+```
+
+它會啟用 `set -E`（errtrace），讓 trap 可傳播進入函式內部，但不會動 `set -e/-u/pipefail` — 您原本的流程控制完全保留。第二次呼叫 `ci::trap_err` 會直接取代前一次（Bash `trap` 標準語意）。
+
 <!-- doc-key: diagnostics-recovery -->
 ## 診斷與恢復
 

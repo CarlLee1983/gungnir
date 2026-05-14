@@ -223,6 +223,37 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
 # Gungnir (dynamic, works from any sub-directory)
 REPO_ROOT=$(ci::root)</code></pre>
             </div>
+
+            <h3 class="mt-12">Version-style Comparison</h3>
+            <p>For comparing semver-ish strings (tool versions, git tags) without writing brittle lexicographic <code>[[ "$a" &gt; "$b" ]]</code> checks. Backed by <code>sort -V</code>.</p>
+            <pre><code># Source mode
+if ci::version_ge "$BUN_VERSION" "1.1.0"; then
+  ci::info "bun is new enough"
+fi
+
+# CLI mode
+./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
+./ci-toolkit version ge 1.2.3 1.2.3   # exits 0</code></pre>
+            <p>The helpers accept <code>vX.Y.Z</code>, <code>X.Y.Z</code>, <code>X.Y</code>, and simple pre-release tags. Build metadata (<code>1.0.0+build42</code>) sorts lexicographically by the tail — fine for CI, not a SemVer-2.0 promise.</p>
+
+            <h3 class="mt-12">Prefix stripping</h3>
+            <p>A small wrapper around Bash's <code>${var#prefix}</code> that also works from CLI pipelines and treats glob characters literally.</p>
+            <pre><code># Source mode
+TAG=$(ci::git_latest_tag v)
+VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
+
+# CLI mode
+./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
+            <p>If the prefix is absent, the original string is returned unchanged.</p>
+
+            <h3 class="mt-12">Default ERR trap</h3>
+            <p><code>ci::trap_err</code> installs a one-line ERR trap so failures inside CI scripts report exit code, <code>file:line</code>, function name, and the failing <code>BASH_COMMAND</code>. Source mode only — the CLI form is informational.</p>
+            <pre><code>source ./ci-toolkit
+ci::trap_err
+
+# Anywhere below, a failing command prints:
+# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."</code></pre>
+            <p>It enables <code>set -E</code> (errtrace) so the trap propagates into functions, but leaves <code>set -e/-u/pipefail</code> alone — your script keeps its existing flow control. A second <code>ci::trap_err</code> call replaces the first (standard Bash <code>trap</code> semantics).</p>
         </section>
 
         <!-- doc-key: diagnostics-recovery -->
