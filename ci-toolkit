@@ -127,7 +127,6 @@ ci::retry() {
   fi
 
   local attempt status
-  : "$delay"
   for ((attempt = 1; attempt <= attempts; attempt++)); do
     set +e
     "$@"
@@ -139,6 +138,10 @@ ci::retry() {
     fi
 
     ci::warn "Attempt $attempt/$attempts failed with status $status: $*"
+
+    if (( attempt < attempts && delay > 0 )); then
+      sleep "$delay"
+    fi
   done
 
   return "$status"

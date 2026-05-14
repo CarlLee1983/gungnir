@@ -59,4 +59,51 @@ run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 3 -- false"
 assert_status 1 "$RUN_STATUS" "source retry with bare -- returns command status"
 assert_contains "$RUN_STDERR" "Attempt 3/3 failed" "source retry with bare -- attempts all three"
 
+# -- Wall-clock behavior (spec §10 #1–#4) ---------------------------------
+
+# #1: --delay 0 behaves like no delay (no sleep, command still fails twice)
+start=$SECONDS
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 2 --delay 0 false"
+elapsed=$(( SECONDS - start ))
+assert_status 1 "$RUN_STATUS" "source retry --delay 0 returns command status"
+if [[ "$elapsed" -lt 1 ]]; then
+  pass "source retry --delay 0 does not sleep (elapsed=${elapsed}s)"
+else
+  fail "source retry --delay 0 should not sleep, elapsed=${elapsed}s"
+fi
+
+# #2: --delay 1, succeeds on 2nd attempt → wall-clock ≥ 1s
+counter_dir="$(make_temp_dir)"
+start=$SECONDS
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 2 --delay 1 -- bash -c 'f=\"$counter_dir/c\"; n=0; [[ -f \$f ]] && n=\$(cat \$f); n=\$((n+1)); printf %s \$n >\$f; [[ \$n -ge 2 ]]'"
+elapsed=$(( SECONDS - start ))
+assert_status 0 "$RUN_STATUS" "source retry --delay 1 succeeds on 2nd attempt"
+if [[ "$elapsed" -ge 1 ]]; then
+  pass "source retry --delay 1 sleeps before retry (elapsed=${elapsed}s)"
+else
+  fail "source retry --delay 1 should sleep ≥1s, elapsed=${elapsed}s"
+fi
+
+# #3: --delay 1, 3 attempts all fail → 2 sleeps → wall-clock ≥ 2s
+start=$SECONDS
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 3 --delay 1 false"
+elapsed=$(( SECONDS - start ))
+assert_status 1 "$RUN_STATUS" "source retry 3 --delay 1 returns final status"
+if [[ "$elapsed" -ge 2 ]]; then
+  pass "source retry 3 --delay 1 sleeps twice (elapsed=${elapsed}s)"
+else
+  fail "source retry 3 --delay 1 should sleep ≥2s, elapsed=${elapsed}s"
+fi
+
+# #4: --delay 5 with ATTEMPTS=1 → no "between", no sleep
+start=$SECONDS
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 1 --delay 5 false"
+elapsed=$(( SECONDS - start ))
+assert_status 1 "$RUN_STATUS" "source retry 1 --delay 5 returns command status"
+if [[ "$elapsed" -lt 1 ]]; then
+  pass "source retry 1 --delay 5 never sleeps (elapsed=${elapsed}s)"
+else
+  fail "source retry 1 --delay 5 should not sleep, elapsed=${elapsed}s"
+fi
+
 finish_tests
