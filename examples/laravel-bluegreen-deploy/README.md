@@ -35,7 +35,7 @@ Line numbers refer to the StationHub original this script was rewritten from.
 | L111-112 `${VAR#$PREFIX}` (4 sites) | `strip_tag_prefix` — local helper, annotated `# proposed: ci::strip_prefix` |
 | L115-119 version compare + exit | `compare_versions_or_exit` — local helper, annotated `# proposed: ci::version_gt` |
 | L128-129 `/usr/local/bin/composer` + env | `ci::require_tool composer`; path resolved via PATH |
-| L132-136 composer install + `sleep 30` + retry | inline `if ! ...; then sleep 30; ...; fi`; annotated `# proposed: ci::retry --delay` |
+| L132-136 composer install + `sleep 30` + retry | `ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader` (landed in v0.1.5) |
 | L138-139 `npm i && npm run build` | preserved; `ci::require_tool npm` guard added |
 | L143-174 multi-host rsync | preserved in `deploy_files_to_host` + `run_multi_host_deploy` |
 | L177-294 multi-host SSH heredoc | preserved in `run_post_deploy_on_host` |
@@ -66,7 +66,7 @@ Line numbers refer to the StationHub original this script was rewritten from.
 
 While rewriting, four high-ROI helpers stood out. Each gets its own future plan; **none are implemented yet**. Inside `deploy-prod.sh`, the temporary local helpers each carry a `# proposed: ci::xxx (see spec §5.X, plan TBD)` annotation. Once a proposal lands, replace the local function with the new `ci::*` call and delete the annotation.
 
-1. **`ci::retry --delay SECONDS`** (spec §5.1) — adds a backoff to the existing `ci::retry`; covers packagist/npm-registry transient failures.
+1. **`ci::retry --delay SECONDS`** (spec §5.1) — **landed in v0.1.5.** Adds an inter-attempt sleep to `ci::retry`; covers packagist/npm-registry transient failures. `run_composer_install` was updated to use it.
 2. **`ci::version_gt A B` / `ci::version_ge A B`** (spec §5.2) — `sort -V` wrapper for tag-prefix release flows.
 3. **`ci::strip_prefix VALUE PREFIX`** (spec §5.3) — primarily for CLI mode; in source mode, `${VAR#$PREFIX}` is already concise.
 4. **`ci::trap_err CALLBACK`** (spec §5.4) — `set -E` + ERR trap convention common in CI scripts.
