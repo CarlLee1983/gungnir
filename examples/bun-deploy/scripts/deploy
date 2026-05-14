@@ -8,37 +8,52 @@ cd "$PROJECT_ROOT"
 # shellcheck source=../ci-toolkit
 source ./ci-toolkit
 
-# Validate everything up front, even for dry-run, so the same failures are
-# observed in dry-run as in real deploys.
-ci::require_env IMAGE_TAG      || exit 1
-ci::require_env REGISTRY_URL   || exit 1
-ci::require_env REGISTRY_TOKEN || exit 1
-ci::require_tool docker        || exit 1
+parse_cli() {
+    # Placeholder for potential argument parsing
+    ci::debug "parsing cli arguments"
+}
 
-image="${REGISTRY_URL}/bun-deploy-example:${IMAGE_TAG}"
-ci::info "target image: $image"
+# @description Execute the container build and push logic
+run_deploy() {
+    ci::require_env IMAGE_TAG      || exit 1
+    ci::require_env REGISTRY_URL   || exit 1
+    ci::require_env REGISTRY_TOKEN || exit 1
+    ci::require_tool docker        || exit 1
 
-if [[ "${DEPLOY_REAL:-0}" != "1" ]]; then
-  ci::warn "DEPLOY_REAL is not set; running in DRY-RUN mode"
-  ci::info "[dry-run] docker login $REGISTRY_URL"
-  ci::info "[dry-run] docker build -t $image ."
-  ci::info "[dry-run] docker push $image"
-  ci::info "dry-run done"
-  exit 0
-fi
+    local image="${REGISTRY_URL}/bun-deploy-example:${IMAGE_TAG}"
+    ci::info "target image: $image"
 
-ci::info "docker login"
-# Pipe the token via stdin so it never appears in argv or `ps` output.
-if ! printf '%s' "$REGISTRY_TOKEN" \
-    | docker login "$REGISTRY_URL" -u "${REGISTRY_USER:-ci}" --password-stdin; then
-  ci::error "docker login failed"
-  exit 1
-fi
+    if ! ci::is_true DEPLOY_REAL; then
+        ci::warn "DEPLOY_REAL is not set; running in DRY-RUN mode"
+        ci::info "[dry-run] docker login $REGISTRY_URL"
+        ci::info "[dry-run] docker build -t $image ."
+        ci::info "[dry-run] docker push $image"
+        ci::info "dry-run done"
+        return 0
+    fi
 
-ci::info "building image"
-docker build -t "$image" .
+    ci::info "docker login"
+    ci::env_default REGISTRY_USER "ci"
+    # Pipe the token via stdin so it never appears in argv or `ps` output.
+    if ! printf '%s' "$REGISTRY_TOKEN" \
+        | docker login "$REGISTRY_URL" -u "$REGISTRY_USER" --password-stdin; then
+        ci::error "docker login failed"
+        return 1
+    fi
 
-ci::info "pushing image"
-ci::retry 3 docker push "$image"
+    ci::info "building image"
+    docker build -t "$image" .
 
-ci::info "deploy done: $image"
+    ci::info "pushing image"
+    ci::retry 3 docker push "$image"
+
+    ci::info "deploy done: $image"
+}
+
+main() {
+    parse_cli "$@"
+    run_deploy
+}
+
+# Execute
+main "$@"

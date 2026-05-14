@@ -36,7 +36,7 @@ Bash 4+. macOS default `/bin/bash` is 3.2 and trips on `set -u` with empty array
 2. **Command section** — `ci::cmd_*` wrappers that adapt argv to library calls and return `64` on usage errors.
 3. **Dispatch section** — only runs when the file is executed directly. Guarded by `[[ "${BASH_SOURCE[0]}" == "$0" ]]`.
 
-When adding a feature, follow that flow: library function first, then CLI command wrapper, then a `case` arm in `ci::dispatch`, then update `ci::usage`.
+When adding a feature, follow that flow: library function first (with a `# @description` comment), then CLI command wrapper, then a `case` arm in `ci::dispatch`, then update `ci::usage`.
 
 ## Conventions to preserve
 
@@ -44,6 +44,8 @@ When adding a feature, follow that flow: library function first, then CLI comman
 - **No secret leakage**: validation helpers report variable *names*, never values. Tests assert that secret values do not appear in stderr.
 - **Stderr for logs, stdout for data**: `ci::log` writes to stderr; helpers that return a path (e.g. `ci::find_up`) write the path to stdout.
 - **TDD by behavior**: every helper has a `tests/test_*.sh` that exercises both source mode (`source ci-toolkit; ci::foo`) and CLI mode (`./ci-toolkit foo`) where applicable. Add the failing test first, then the implementation.
+- **Modular Scripts**: Orchestration scripts (like those in `examples/`) should use a `main()` entry point and a `run_xxx()` function structure. Avoid top-level execution logic.
+- **Self-Documentation**: All public `ci::` functions must have a `# @description` comment immediately above the function definition for discovery via `ci-toolkit ls`.
 
 ## Test harness
 
