@@ -38,6 +38,26 @@ run_capture "$ROOT_DIR/ci-toolkit" retry -- bash -c "count_file='$cli_counter_di
 assert_status 0 "$RUN_STATUS" "CLI retry succeeds when later attempt passes"
 assert_eq "2" "$(cat "$cli_counter_dir/count")" "CLI retry stops after success"
 
+cli_default_counter_dir="$(make_temp_dir)"
+run_capture "$ROOT_DIR/ci-toolkit" retry -- bash -c "count_file='$cli_default_counter_dir/count'; count=0; [[ -f \"\$count_file\" ]] && count=\$(cat \"\$count_file\"); count=\$((count + 1)); printf \"%s\" \"\$count\" >\"\$count_file\"; exit 9"
+assert_status 9 "$RUN_STATUS" "CLI retry default attempts returns final status"
+assert_eq "3" "$(cat "$cli_default_counter_dir/count")" "CLI retry defaults to three attempts"
+assert_contains "$RUN_STDERR" "Attempt 3/3 failed" "CLI retry default attempts reports third failure"
+
+cli_custom_counter_dir="$(make_temp_dir)"
+run_capture "$ROOT_DIR/ci-toolkit" retry 4 -- bash -c "count_file='$cli_custom_counter_dir/count'; count=0; [[ -f \"\$count_file\" ]] && count=\$(cat \"\$count_file\"); count=\$((count + 1)); printf \"%s\" \"\$count\" >\"\$count_file\"; [[ \"\$count\" -ge 4 ]]"
+assert_status 0 "$RUN_STATUS" "CLI retry accepts custom attempt count"
+assert_eq "4" "$(cat "$cli_custom_counter_dir/count")" "CLI retry custom attempts runs until requested count"
+assert_contains "$RUN_STDERR" "Attempt 3/4 failed" "CLI retry custom attempts reports denominator"
+
+run_capture "$ROOT_DIR/ci-toolkit" retry 0 -- true
+assert_status 64 "$RUN_STATUS" "CLI retry rejects zero attempts"
+assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] -- COMMAND" "CLI retry zero attempts prints usage"
+
+run_capture "$ROOT_DIR/ci-toolkit" retry 2 true
+assert_status 64 "$RUN_STATUS" "CLI retry requires separator before command"
+assert_contains "$RUN_STDERR" "ci-toolkit retry [ATTEMPTS] -- COMMAND" "CLI retry missing separator prints usage"
+
 path_dir="$(make_temp_dir)"
 mkdir -p "$path_dir/a/b/c"
 touch "$path_dir/.git"

@@ -39,6 +39,7 @@ Pin to a tag (`v0.1.0` above). The artifact is a single file with no runtime dep
 ./ci-toolkit env require DEPLOY_TOKEN
 ./ci-toolkit tool require git
 ./ci-toolkit retry -- make test
+./ci-toolkit retry 5 -- curl -fsS https://example.com/health
 ```
 
 ### Source mode
@@ -106,6 +107,7 @@ mismatching symlink at the destination.
 | `env require VAR_NAME` | Exit `1` if the environment variable is unset or empty. The variable's value is never printed. |
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
 | `retry -- COMMAND [ARGS...]` | Run `COMMAND` up to 3 times until it returns `0`. Returns the last attempt's exit status. |
+| `retry ATTEMPTS -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times. `ATTEMPTS` must be a positive integer. |
 
 Unknown commands or malformed arguments exit `64` and print usage to stderr.
 
