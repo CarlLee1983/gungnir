@@ -136,6 +136,53 @@ assert_contains "$RUN_STDERR" "forbidden public command names" \
 assert_not_contains "$RUN_STDOUT" "boundary: ok" \
   "release-check boundary: forbidden command does not print ok to stdout"
 
+# descriptions subcommand: real artifact has @description on every public function.
+run_capture "$RELEASE_CHECK" descriptions
+assert_status 0 "$RUN_STATUS" "release-check descriptions: clean artifact exits zero"
+assert_contains "$RUN_STDOUT" "descriptions: ok" \
+  "release-check descriptions: prints ok line"
+
+# descriptions subcommand: synthetic artifact with a missing @description must fail.
+missing_desc_tmp="$(make_temp_dir)"
+cat >"$missing_desc_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+ci::ls() {
+  awk '
+  /^# @description / { comment = substr($0, 16); next }
+  /^ci::.*\(.*\) \{/ {
+    func_name = $1; sub(/\(.*\)/, "", func_name)
+    if (func_name ~ /^ci::cmd_/ || func_name == "ci::dispatch" || func_name == "ci::usage") { comment=""; next }
+    if (comment == "") comment = "(No description)"
+    printf "  %-20s %s\n", func_name, comment
+    comment = ""; next
+  }
+  { comment = "" }
+  ' "${BASH_SOURCE[0]}" | sort
+}
+ci::missing_description_fixture() { :; }
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && case "${1:-}" in ls) ci::ls;; esac
+EOF
+chmod +x "$missing_desc_tmp/ci-toolkit"
+run_capture "$RELEASE_CHECK" descriptions "$missing_desc_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" \
+  "release-check descriptions: missing @description exits non-zero"
+assert_contains "$RUN_STDERR" "missing # @description" \
+  "release-check descriptions: explains missing @description on stderr"
+assert_not_contains "$RUN_STDOUT" "descriptions: ok" \
+  "release-check descriptions: missing case does not print ok"
+
+# descriptions subcommand: non-executable artifact must surface clear error.
+desc_notexec_tmp="$(make_temp_dir)"
+cat >"$desc_notexec_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+EOF
+chmod 0644 "$desc_notexec_tmp/ci-toolkit"
+run_capture "$RELEASE_CHECK" descriptions "$desc_notexec_tmp/ci-toolkit"
+assert_status 1 "$RUN_STATUS" \
+  "release-check descriptions: non-executable exits non-zero"
+assert_contains "$RUN_STDERR" "not executable" \
+  "release-check descriptions: explains executable bit failure"
+
 # copy-smoke subcommand: real artifact copied into a temp dir must work standalone.
 run_capture "$RELEASE_CHECK" copy-smoke
 assert_status 0 "$RUN_STATUS" "release-check copy-smoke: standalone artifact exits zero"
@@ -165,6 +212,8 @@ assert_contains "$RUN_STDOUT" "version: ok" "release-check all: ran version chec
 assert_contains "$RUN_STDOUT" "artifact: ok" "release-check all: ran artifact check"
 assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary check"
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
+assert_contains "$RUN_STDOUT" "descriptions: ok" \
+  "release-check all: ran descriptions check"
 assert_contains "$RUN_STDOUT" "gates:" "release-check all: ran gates check"
 assert_contains "$RUN_STDOUT" "docs " \
   "release-check all: gates summary reports docs status"

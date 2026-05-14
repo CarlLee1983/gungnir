@@ -7,7 +7,7 @@
 CI_TOOLKIT_VERSION="0.1.5"
 CI_TOOLKIT_NAME="ci-toolkit"
 
-# Log a message with a specific level (info, warn, error, debug).
+# @description Log a message with a specific level (info, warn, error, debug).
 ci::log() {
   local level="$1"
   shift || true
@@ -22,33 +22,33 @@ ci::log() {
   printf '[%s] %s\n' "$level" "$message" >&2
 }
 
-# Log an info level message.
+# @description Log an info level message.
 ci::info() {
   ci::log info "$@"
 }
 
-# Log a warning level message.
+# @description Log a warning level message.
 ci::warn() {
   ci::log warn "$@"
 }
 
-# Log an error level message.
+# @description Log an error level message.
 ci::error() {
   ci::log error "$@"
 }
 
-# Log a debug level message.
+# @description Log a debug level message.
 ci::debug() {
   ci::log debug "$@"
 }
 
-# Exit with an error message.
+# @description Exit with an error message.
 ci::die() {
   ci::error "$*"
   return 1
 }
 
-# Ensure an environment variable is set and not empty.
+# @description Ensure an environment variable is set and not empty.
 ci::require_env() {
   local name="${1:-}"
 
@@ -65,7 +65,7 @@ ci::require_env() {
   return 0
 }
 
-# Ensure a tool is available on the PATH.
+# @description Ensure a tool is available on the PATH.
 ci::require_tool() {
   local name="${1:-}"
 
@@ -82,7 +82,7 @@ ci::require_tool() {
   return 0
 }
 
-# Retry a command N times, with an optional delay between attempts.
+# @description Retry a command N times, with an optional delay between attempts.
 ci::retry() {
   local attempts="${1:-}"
   shift || true
@@ -147,7 +147,7 @@ ci::retry() {
   return "$status"
 }
  
-# Set a default value for an environment variable if it is not set.
+# @description Set a default value for an environment variable if it is not set.
 ci::env_default() {
   local name="${1:-}"
   local default="${2:-}"
@@ -163,7 +163,7 @@ ci::env_default() {
   fi
 }
  
-# Check if an environment variable is "1" or "true".
+# @description Check if an environment variable is "1" or "true".
 ci::is_true() {
   local name="${1:-}"
   if [[ -z "$name" ]]; then
@@ -173,7 +173,7 @@ ci::is_true() {
   [[ "${!name:-0}" == "1" || "${!name:-}" == "true" ]]
 }
  
-# Find a marker file by searching up the directory tree.
+# @description Find a marker file by searching up the directory tree.
 ci::find_up() {
   local marker="${1:-}"
   local dir
@@ -196,12 +196,12 @@ ci::find_up() {
   return 1
 }
 
-# Find the Git repository root.
+# @description Find the Git repository root.
 ci::root() {
   ci::find_up .git
 }
 
-# Get the latest Git tag matching a prefix.
+# @description Get the latest Git tag matching a prefix.
 ci::git_latest_tag() {
   local prefix="${1:-}"
   local latest_tag
@@ -219,7 +219,7 @@ ci::git_latest_tag() {
   fi
 }
 
-# Send a notification to a Slack webhook.
+# @description Send a notification to a Slack webhook.
 ci::slack_webhook() {
   local url_var="${1:-}"
   local project="${2:-}"
@@ -248,7 +248,7 @@ ci::slack_webhook() {
     --data "$payload" "${!url_var}" -o /dev/null || true
 }
 
-# List all available ci:: functions and their descriptions.
+# @description List all available ci:: functions and their descriptions.
 ci::ls() {
   local script_file="${BASH_SOURCE[0]}"
   if [[ ! -f "$script_file" ]]; then
@@ -257,12 +257,8 @@ ci::ls() {
   fi
 
   awk '
-  /^# / {
-    if (comment == "") {
-      comment = substr($0, 3)
-    } else {
-      comment = comment " " substr($0, 3)
-    }
+  /^# @description / {
+    comment = substr($0, 16)
     next
   }
   /^ci::.*\(.*\) \{/ {

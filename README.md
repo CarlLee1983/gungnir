@@ -214,6 +214,7 @@ release. It exposes individual checks plus an aggregate pipeline:
 ./scripts/release-check version      # CI_TOOLKIT_VERSION vs CHANGELOG.md
 ./scripts/release-check artifact     # executable bit, Bash marker, README URL
 ./scripts/release-check boundary     # platform-neutral guardrails
+./scripts/release-check descriptions # every public ci:: function has # @description
 ./scripts/release-check copy-smoke   # standalone single-file distribution
 ./scripts/release-check gates        # tests, lint, smoke, user-docs alignment
 ./scripts/release-check all          # everything above

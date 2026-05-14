@@ -112,6 +112,26 @@ rc::boundary() {
   printf 'boundary: ok\n'
 }
 
+rc::descriptions() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+
+  if [[ ! -x "$target_file" ]]; then
+    printf 'descriptions: %s is not executable\n' "$target_file" >&2
+    return 1
+  fi
+
+  local missing
+  missing="$("$target_file" ls 2>/dev/null | grep -F '(No description)' || true)"
+  if [[ -n "$missing" ]]; then
+    printf '%s\n' "$missing" >&2
+    printf 'descriptions: public ci:: functions missing # @description in %s\n' \
+      "$target_file" >&2
+    return 1
+  fi
+
+  printf 'descriptions: ok\n'
+}
+
 rc::copy_smoke() {
   local target_file="${1:-$ROOT_DIR/ci-toolkit}"
   local tmpdir=""
@@ -190,6 +210,9 @@ main() {
     copy-smoke)
       rc::copy_smoke "$@"
       ;;
+    descriptions)
+      rc::descriptions "$@"
+      ;;
     gates)
       rc::gates "$@"
       ;;
@@ -198,11 +221,12 @@ main() {
       rc::artifact
       rc::gates
       rc::boundary
+      rc::descriptions
       rc::copy_smoke
       printf 'release-check: all checks passed\n'
       ;;
     *)
-      printf 'usage: release-check [version|artifact|boundary|copy-smoke|gates|all]\n' >&2
+      printf 'usage: release-check [version|artifact|boundary|copy-smoke|descriptions|gates|all]\n' >&2
       return 64
       ;;
   esac
