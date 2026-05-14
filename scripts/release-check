@@ -159,7 +159,16 @@ rc::gates() {
 
   "$ROOT_DIR/scripts/smoke"
 
-  printf 'gates: tests %s; lint %s; smoke ok\n' "$tests_status" "$lint_status"
+  local docs_status
+  if command -v bun >/dev/null 2>&1; then
+    bun run "$ROOT_DIR/scripts/check-user-docs.ts"
+    docs_status="ran"
+  else
+    docs_status="skipped (bun not installed)"
+  fi
+
+  printf 'gates: tests %s; lint %s; smoke ok; docs %s\n' \
+    "$tests_status" "$lint_status" "$docs_status"
 }
 
 main() {

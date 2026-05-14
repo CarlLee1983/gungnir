@@ -166,6 +166,8 @@ assert_contains "$RUN_STDOUT" "artifact: ok" "release-check all: ran artifact ch
 assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary check"
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
 assert_contains "$RUN_STDOUT" "gates:" "release-check all: ran gates check"
+assert_contains "$RUN_STDOUT" "docs " \
+  "release-check all: gates summary reports docs status"
 assert_contains "$RUN_STDOUT" "release-check: all checks passed" \
   "release-check all: prints final summary"
 
@@ -174,5 +176,7 @@ RC_INSIDE_GATES=1 run_capture "$RELEASE_CHECK" gates
 assert_status 0 "$RUN_STATUS" "release-check gates: recursion guard exits zero"
 assert_contains "$RUN_STDOUT" "tests skipped (recursive invocation)" \
   "release-check gates: guard reports tests skipped"
+assert_contains "$RUN_STDOUT" "docs " \
+  "release-check gates: guard still reports docs status"
 
 finish_tests

@@ -26,7 +26,7 @@ chmod +x ci-toolkit
 ./ci-toolkit version
 ```
 
-Pin to a tag (`v0.1.0` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
+Pin to a tag (`v0.1.5` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
 
 ## Quickstart
 
@@ -215,7 +215,7 @@ release. It exposes individual checks plus an aggregate pipeline:
 ./scripts/release-check artifact     # executable bit, Bash marker, README URL
 ./scripts/release-check boundary     # platform-neutral guardrails
 ./scripts/release-check copy-smoke   # standalone single-file distribution
-./scripts/release-check gates        # tests, lint, smoke
+./scripts/release-check gates        # tests, lint, smoke, user-docs alignment
 ./scripts/release-check all          # everything above
 ```
 
