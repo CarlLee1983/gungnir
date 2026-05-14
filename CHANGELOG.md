@@ -8,6 +8,7 @@
 - Added environment validation through `ci::require_env` and `ci-toolkit env require`.
 - Added tool validation through `ci::require_tool` and `ci-toolkit tool require`.
 - Added retry support through `ci::retry` and `ci-toolkit retry --`.
+- Added custom CLI retry attempts through `ci-toolkit retry ATTEMPTS --`.
 - Added path helpers `ci::find_up` and `ci::root`.
 - Added Bash behavior tests, optional ShellCheck linting, and smoke checks.
 

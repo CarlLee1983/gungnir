@@ -139,7 +139,7 @@ Usage:
   ci-toolkit log <info|warn|error|debug> <message>
   ci-toolkit env require VAR_NAME
   ci-toolkit tool require TOOL_NAME
-  ci-toolkit retry -- COMMAND [ARGS...]
+  ci-toolkit retry [ATTEMPTS] -- COMMAND [ARGS...]
 
 Source mode:
   source ./ci-toolkit
@@ -203,13 +203,30 @@ ci::cmd_tool() {
 }
 
 ci::cmd_retry() {
+  local attempts=3
+
+  if [[ "${1:-}" != "--" ]]; then
+    attempts="${1:-}"
+    shift || true
+  fi
+
+  if [[ "$attempts" != "3" && "${1:-}" != "--" ]]; then
+    ci::usage >&2
+    return 64
+  fi
+
+  if [[ -z "$attempts" || ! "$attempts" =~ ^[0-9]+$ || "$attempts" -lt 1 ]]; then
+    ci::usage >&2
+    return 64
+  fi
+
   if [[ "${1:-}" != "--" ]]; then
     ci::usage >&2
     return 64
   fi
   shift
 
-  ci::retry 3 "$@"
+  ci::retry "$attempts" "$@"
 }
 
 ci::dispatch() {
