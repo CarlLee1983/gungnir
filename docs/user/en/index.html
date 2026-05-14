@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gungnir | User documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-primary: #D97757;
+            --color-secondary: #635C55;
+            --color-background: #F9F5F1;
+            --color-surface: #FFFFFF;
+            --color-border: #E5E0DA;
+            --color-text-main: #2D2621;
+            --color-text-muted: #8C847D;
+            --font-sans: 'Inter', 'Outfit', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+        }
+        @layer base {
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                @apply bg-background text-text-main antialiased selection:bg-primary/10;
+                font-family: var(--font-sans);
+            }
+            h1, h2, h3 { font-family: var(--font-display); }
+            h1 { @apply text-5xl font-black tracking-tight mt-16 mb-8 text-text-main; }
+            h2 { @apply text-3xl font-bold tracking-tight mt-16 mb-8 flex items-center gap-3 text-text-main; }
+            h2::after { content: ""; @apply h-px flex-1 bg-border ml-4; }
+            h3 { @apply text-xl font-bold mt-12 mb-6 text-text-main; }
+            p { @apply mb-6 leading-relaxed text-text-muted text-[1.05rem]; }
+            ul { @apply list-none mb-8 space-y-3; }
+            li { @apply flex items-start gap-3 text-text-muted; }
+            li:not(.nav-item)::before { content: "→"; @apply text-primary font-bold mt-0.5; }
+            code { @apply bg-white px-1.5 py-0.5 rounded text-[0.85rem] font-mono text-primary border border-border; }
+            pre { @apply relative bg-[#332F2E] rounded-lg p-6 mb-8 overflow-x-auto border border-secondary/20 shadow-sm; }
+            pre code { @apply bg-transparent p-0 text-[#EDE8E4] text-[0.9rem] leading-relaxed border-none; }
+            table { @apply w-full border-collapse mb-10 text-sm text-left rounded-lg overflow-hidden border border-border bg-surface shadow-sm; }
+            th { @apply bg-background/50 px-6 py-4 font-bold text-text-main border-b border-border; }
+            td { @apply px-6 py-4 border-b border-border text-text-muted; }
+            tr:last-child td { @apply border-none; }
+            tr:hover td { @apply bg-background/30 transition-colors; }
+        }
+        .paper-card {
+            @apply bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300;
+        }
+        .nav-link {
+            @apply block py-2 px-4 rounded-md text-text-muted hover:text-primary transition-colors font-medium;
+        }
+        .nav-link.active {
+            @apply text-primary font-bold border-l-2 border-primary bg-primary/5 rounded-none;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <nav class="hidden lg:block w-80 h-screen sticky top-0 self-start bg-surface border-r border-border p-8 overflow-y-auto shrink-0 transition-all z-50">
+        <div class="flex items-center gap-3 mb-12">
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                <span class="text-white font-black text-xl">G</span>
+            </div>
+            <span class="text-2xl font-black tracking-tight text-text-main">Gungnir</span>
+        </div>
+
+        <div class="space-y-8">
+            <section>
+                <ul class="list-none space-y-1 p-0 m-0">
+                    <li class="nav-item"><a href="#overview" class="nav-link">Overview</a></li>
+                    <li class="nav-item"><a href="#install-setup" class="nav-link">Install & setup</a></li>
+                    <li class="nav-item"><a href="#connections" class="nav-link">Connections</a></li>
+                    <li class="nav-item"><a href="#discovery-read" class="nav-link">Discovery / read</a></li>
+                    <li class="nav-item"><a href="#writes-mutations" class="nav-link">Writes / mutations</a></li>
+                    <li class="nav-item"><a href="#advanced-tools" class="nav-link">Advanced tools</a></li>
+                    <li class="nav-item"><a href="#diagnostics-recovery" class="nav-link">Diagnostics / recovery</a></li>
+                    <li class="nav-item"><a href="#ai-integration" class="nav-link">AI integration</a></li>
+                    <li class="nav-item"><a href="#documentation-maintenance" class="nav-link">Documentation maintenance</a></li>
+                </ul>
+            </section>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-16 max-w-5xl mx-auto">
+        <!-- doc-key: overview -->
+        <section id="overview" class="py-12">
+            <h1>Gungnir</h1>
+            <p class="text-xl font-medium text-text-muted max-w-3xl leading-relaxed">
+                Experimental, platform-neutral Bash helpers for CI scripts
+            </p>
+            <p>
+                Gungnir is an experimental, platform-neutral Bash toolkit designed to simplify CI/CD scripts. It provides a single-file artifact that functions as both a CLI tool and a sourceable Bash library, consolidating common patterns like structured logging, environment validation, and robust command retries.
+            </p>
+            <div class="flex gap-4 mt-8">
+                <a href="https://github.com/CMG/Gungnir" class="px-6 py-3 bg-surface border border-border rounded-md font-bold text-text-main hover:bg-background transition-all">GitHub</a>
+            </div>
+        </section>
+
+        <!-- doc-key: install-setup -->
+        <section id="install-setup">
+            <h2>Install &amp; setup</h2>
+            <p>Install the <code>ci-toolkit</code> artifact directly in your CI environment using <code>curl</code> and <code>chmod</code>. We recommend pinning to a specific release tag for stability:</p>
+            <pre><code>curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.4/ci-toolkit -o ci-toolkit
+chmod +x ci-toolkit
+./ci-toolkit version</code></pre>
+            <p>For local development or as an AI skill, you can use the provided <code>scripts/install-skill</code> to symlink the toolkit into your Claude Code skills directory.</p>
+
+            <h3>Comparison: Why use Gungnir?</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Raw Bash</th>
+                        <th>Gungnir <code>ci-toolkit</code></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Logging</strong></td>
+                        <td><code>echo "[INFO] starting"</code></td>
+                        <td><code>ci::info "starting"</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Env Check</strong></td>
+                        <td><code>if [[ -z "$TOKEN" ]]; then ...</code></td>
+                        <td><code>ci::require_env TOKEN</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Retry</strong></td>
+                        <td><code>for i in {1..3}; do ...</code></td>
+                        <td><code>ci::retry 3 cmd</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Path Fix</strong></td>
+                        <td><code>$(cd "$(dirname "$0")"/.. && pwd)</code></td>
+                        <td><code>ci::root</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- doc-key: connections -->
+        <section id="connections">
+            <h2>Connections / initialisation</h2>
+            <p>Gungnir requires <strong>Bash 4+</strong>. It is designed to be platform-neutral, making no assumptions about specific CI vendors (like GitHub Actions or GitLab).</p>
+            
+            <h3>Source Mode vs CLI Mode</h3>
+            <ul>
+                <li><strong>Source Mode (Recommended for scripts)</strong>: <code>source ./ci-toolkit</code> allows you to use <code>ci::</code> functions. These functions return status codes and do <strong>not</strong> call <code>exit</code>, giving you full control over your script's flow.</li>
+                <li><strong>CLI Mode</strong>: Run <code>./ci-toolkit</code> directly. Commands will <code>exit</code> with non-zero codes on failure, which is ideal for one-liners in <code>workflow.yml</code> or <code>Makefile</code>.</li>
+            </ul>
+
+            <h3>Environment Variables</h3>
+            <ul>
+                <li><strong><code>CI_TOOLKIT_DEBUG=1</code></strong>: Enables verbose debug logging to stderr.</li>
+                <li><strong><code>ci::env_default VAR VALUE</code></strong>: Safely sets a fallback value if a variable is unset.</li>
+            </ul>
+        </section>
+
+        <!-- doc-key: discovery-read -->
+        <section id="discovery-read">
+            <h2>Discovery / read</h2>
+            <p>Explore the toolkit's capabilities without making changes:</p>
+            <ul>
+                <li><strong><code>ci::ls</code></strong>: List all available functions with descriptions. This is the fastest way to see what's available.</li>
+                <li><strong><code>ci::is_true VAR</code></strong>: A robust check for boolean-like variables. It returns success if the variable is <code>1</code> or <code>true</code>.</li>
+            </ul>
+
+            <div class="paper-card p-6 mt-6">
+                <p class="font-bold mb-2">Raw Bash comparison:</p>
+                <pre><code># Raw Bash (brittle)
+if [[ "${SKIP_TESTS:-}" == "true" ]]; then ...
+
+# Gungnir (robust)
+if ci::is_true SKIP_TESTS; then ...</code></pre>
+            </div>
+        </section>
+
+        <!-- doc-key: writes-mutations -->
+        <section id="writes-mutations">
+            <h2>Writes / mutations</h2>
+            
+            <h3>Robust Retries</h3>
+            <p>Gungnir's <code>ci::retry</code> is more powerful than a simple loop. It preserves the exit status of the final attempt and logs failures to stderr.</p>
+
+            <div class="paper-card p-6 mt-6">
+                <p class="font-bold mb-2">Example: Flaky Network Call</p>
+                <pre><code># Raw Bash (verbose and easy to get wrong)
+n=0; until [ "$n" -ge 3 ]; do
+  curl -fsS https://api.example.com && break
+  n=$((n+1)); sleep 1
+done
+
+# Gungnir
+ci::retry 3 curl -fsS https://api.example.com</code></pre>
+            </div>
+
+            <h3 class="mt-12">Secure Environment Checks</h3>
+            <p><code>ci::require_env</code> ensures a variable exists without accidentally printing its value (even if <code>set -x</code> is on in some environments).</p>
+        </section>
+
+        <!-- doc-key: advanced-tools -->
+        <section id="advanced-tools">
+            <h2>Advanced tools</h2>
+            <h3>Path Discovery</h3>
+            <p>Finding the repository root or a specific configuration file is a common pain point in CI.</p>
+            <ul>
+                <li><strong><code>ci::find_up &lt;marker&gt;</code></strong>: Searches upwards from the current directory until it finds a file or directory named <code>&lt;marker&gt;</code>.</li>
+                <li><strong><code>ci::root</code></strong>: A shortcut for <code>ci::find_up .git</code>.</li>
+            </ul>
+
+            <div class="paper-card p-6 mt-6">
+                <p class="font-bold mb-2">Raw Bash comparison:</p>
+                <pre><code># Raw Bash (fixed depth, often breaks if script moves)
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
+
+# Gungnir (dynamic, works from any sub-directory)
+REPO_ROOT=$(ci::root)</code></pre>
+            </div>
+        </section>
+
+        <!-- doc-key: diagnostics-recovery -->
+        <section id="diagnostics-recovery">
+            <h2>Diagnostics / recovery</h2>
+            <p>Gungnir helps you build "self-healing" or descriptive CI scripts.</p>
+            <ul>
+                <li><strong><code>ci::die "Message"</code></strong>: Logs an error and returns <code>1</code>. Use it with <code>|| exit 1</code> in your main script logic.</li>
+                <li><strong><code>ci::require_tool</code></strong>: Prevents "command not found" errors halfway through a long-running job by checking dependencies upfront.</li>
+            </ul>
+        </section>
+
+        <!-- doc-key: ai-integration -->
+        <section id="ai-integration">
+            <h2>AI-agent integration</h2>
+            <p>Gungnir is built for AI-first development. It ships with a <strong>Claude Code skill</strong> (<code>skills/ci-toolkit/</code>) that helps LLMs recognize when to use the toolkit.</p>
+            <p>When working with an AI agent:</p>
+            <ul>
+                <li>Point the agent to <code>AGENTS.md</code> for repo-specific conventions.</li>
+                <li>Encourage the agent to use <code>ci::require_env</code> and <code>ci::require_tool</code> to prevent brittle scripts.</li>
+                <li>Use <code>ci::retry</code> for any network-dependent calls the agent generates.</li>
+            </ul>
+        </section>
+
+        <!-- doc-key: documentation-maintenance -->
+        <section id="documentation-maintenance">
+            <h2>Documentation maintenance</h2>
+            <p>Gungnir maintains documentation parity using a dual Markdown and HTML approach. Every topic is anchored by a <code><!-- doc-key: id --></code> comment.</p>
+            <p>Consistency across locales and formats is verified via:</p>
+            <pre><code>bun run scripts/check-user-docs.ts</code></pre>
+            <p>This ensures that the reference (<code>index.md</code>) and the visual surface (<code>index.html</code>) always present the same features in the same order.</p>
+        </section>
+
+        <footer class="mt-32 pb-20 text-center">
+            <div class="h-px w-24 bg-border mx-auto mb-8"></div>
+            <p class="text-text-muted text-sm font-medium">Gungnir documentation</p>
+        </footer>
+    </main>
+
+    <script>
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.5 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    document.querySelectorAll('.nav-item a').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+        document.querySelectorAll('section[id]').forEach((section) => observer.observe(section));
+    </script>
+</body>
+</html>
