@@ -4,7 +4,7 @@
 # Usage as source: source ./ci-toolkit && ci::info "message"
 # Runtime: Bash 4+
 
-CI_TOOLKIT_VERSION="0.1.0"
+CI_TOOLKIT_VERSION="0.1.1"
 CI_TOOLKIT_NAME="ci-toolkit"
 
 ci::log() {
@@ -129,6 +129,51 @@ ci::root() {
   ci::find_up .git
 }
 
+ci::git_latest_tag() {
+  local prefix="${1:-}"
+  local latest_tag
+
+  ci::require_tool git || return 1
+
+  latest_tag=$(git tag -l "${prefix}*" 2>/dev/null | sort -V | tail -n 1)
+  
+  if [[ -n "$latest_tag" ]]; then
+    printf '%s\n' "$latest_tag"
+    return 0
+  else
+    ci::error "no tag matches ${prefix}*"
+    return 1
+  fi
+}
+
+ci::slack_webhook() {
+  local url_var="${1:-}"
+  local project="${2:-}"
+  local status="${3:-}"
+  local message="${4:-}"
+
+  if [[ -z "$url_var" || -z "$project" || -z "$status" || -z "$message" ]]; then
+    ci::error "Usage: ci::slack_webhook URL_VAR PROJECT STATUS MESSAGE"
+    return 64
+  fi
+
+  if [[ -z "${!url_var+x}" || -z "${!url_var}" ]]; then
+    ci::warn "Slack webhook variable $url_var is not set; skipping"
+    return 0
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    ci::warn "curl is not on PATH; skipping Slack"
+    return 0
+  fi
+
+  local payload="{\"text\": \"*[$project]* ${status}: ${message}\"}"
+
+  ci::retry 3 curl -sS --connect-timeout 5 --max-time 15 \
+    -X POST -H 'Content-type: application/json' \
+    --data "$payload" "${!url_var}" -o /dev/null || true
+}
+
 ci::usage() {
   cat <<'USAGE'
 ci-toolkit - Experimental platform-neutral CI Bash toolkit
@@ -140,6 +185,8 @@ Usage:
   ci-toolkit env require VAR_NAME
   ci-toolkit tool require TOOL_NAME
   ci-toolkit retry [ATTEMPTS] -- COMMAND [ARGS...]
+  ci-toolkit git latest-tag [PREFIX]
+  ci-toolkit slack webhook URL_VAR PROJECT STATUS MESSAGE
 
 Source mode:
   source ./ci-toolkit
@@ -229,6 +276,36 @@ ci::cmd_retry() {
   ci::retry "$attempts" "$@"
 }
 
+ci::cmd_git() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    latest-tag)
+      ci::git_latest_tag "${1:-}"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_slack() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    webhook)
+      ci::slack_webhook "${1:-}" "${2:-}" "${3:-}" "${4:-}"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
 ci::dispatch() {
   local command="${1:-help}"
   if [[ "$#" -gt 0 ]]; then
@@ -250,6 +327,12 @@ ci::dispatch() {
       ;;
     tool)
       ci::cmd_tool "$@"
+      ;;
+    git)
+      ci::cmd_git "$@"
+      ;;
+    slack)
+      ci::cmd_slack "$@"
       ;;
     retry)
       ci::cmd_retry "$@"

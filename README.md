@@ -21,7 +21,7 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.0/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.1/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
@@ -108,6 +108,8 @@ mismatching symlink at the destination.
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
 | `retry -- COMMAND [ARGS...]` | Run `COMMAND` up to 3 times until it returns `0`. Returns the last attempt's exit status. |
 | `retry ATTEMPTS -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times. `ATTEMPTS` must be a positive integer. |
+| `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. |
+| `slack webhook VAR PROJECT STATUS MSG` | Send a notification to Slack using the URL stored in `VAR`. |
 
 Unknown commands or malformed arguments exit `64` and print usage to stderr.
 
@@ -145,6 +147,8 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | --- | --- |
 | `ci::find_up MARKER` | Walk up from `$PWD` toward `/` looking for an entry named `MARKER`. Print the matching directory to **stdout** on success, return `1` if no match. |
 | `ci::root` | Equivalent to `ci::find_up .git`. |
+| `ci::git_latest_tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` to **stdout**. Returns `1` if no match. |
+| `ci::slack_webhook VAR PROJ STAT MSG` | Send a best-effort Slack notification. Skips gracefully if `VAR` is unset or `curl` is missing. |
 
 ## Exit codes
 
