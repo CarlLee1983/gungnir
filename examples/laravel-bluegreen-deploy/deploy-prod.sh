@@ -405,6 +405,41 @@ run_multi_host_deploy() {
     done
 }
 
+# run_cloudwatch_setup — conditional CloudWatch log-group creation.
+# Mirrors original L300-322. The referenced setup script lives in the OUTER
+# wrapper (StationHub) repo, NOT in this example — hence the [[ -f ]] guard.
+run_cloudwatch_setup() {
+    if ! ci::is_true ENABLE_CLOUDWATCH; then
+        ci::info "skipping CloudWatch log-group creation (use --cloudwatch to enable)"
+        ci::info "note: CloudWatch env vars are still set during deploy"
+        return 0
+    fi
+
+    ci::info "=========================================="
+    ci::info "creating CloudWatch log groups..."
+    ci::info "=========================================="
+
+    ci::require_env CLOUDWATCH_ENV || return 0
+    ci::require_env CLOUDWATCH_APP || return 0
+    ci::require_env CLOUDWATCH_SERVICE || return 0
+
+    local setup_script="${PROJECT_DIR}/scripts/deploy/shared/remote-cloudwatch-setup.sh"
+    if [[ ! -f "$setup_script" ]]; then
+        ci::warn "remote-cloudwatch-setup.sh not found at $setup_script — skipping"
+        ci::warn "(this is expected in the examples/ tree; supply it in your outer wrapper)"
+        return 0
+    fi
+
+    # shellcheck source=/dev/null
+    # Reason: the setup script lives in the outer wrapper and is intentionally
+    # not part of this example. ShellCheck cannot resolve the path statically.
+    source "$setup_script"
+
+    ci::info "=========================================="
+    ci::info "CloudWatch log-group creation complete"
+    ci::info "=========================================="
+}
+
 # === Pipeline ===
 main() {
     :
