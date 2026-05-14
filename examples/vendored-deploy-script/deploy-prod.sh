@@ -31,18 +31,20 @@ set -euo pipefail
 # SLACK_PROJECT_NAME=my-app
 # ---------------------------------------------------------------------------
 
-readonly SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-REPO_FOLDER="${REPO_FOLDER:-production}"
-readonly BUILD_REPO_DEFAULT="$SCRIPT_DIR/$REPO_FOLDER"
-
-# Hook Paths: Allow overriding project-specific script locations
-readonly HOOK_BUILD="${HOOK_BUILD:-infra/ci/build.sh}"
-readonly HOOK_DEPLOY="${HOOK_DEPLOY:-infra/ci/deploy.sh}"
-readonly HOOK_SYNC="${HOOK_SYNC:-infra/ci/sync-env-to-shared.sh}"
-
+readonly SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+ 
 # Load ci-toolkit
 # shellcheck source=./ci-toolkit
 source "$SCRIPT_DIR/ci-toolkit"
+ 
+ci::env_default REPO_FOLDER "production"
+readonly BUILD_REPO_DEFAULT="$SCRIPT_DIR/$REPO_FOLDER"
+ 
+# Hook Paths: Allow overriding project-specific script locations
+ci::env_default HOOK_BUILD  "infra/ci/build.sh"
+ci::env_default HOOK_DEPLOY "infra/ci/deploy.sh"
+ci::env_default HOOK_SYNC   "infra/ci/sync-env-to-shared.sh"
+readonly HOOK_BUILD HOOK_DEPLOY HOOK_SYNC
 
 # Global state
 DISCOVER_ARGS=()
@@ -203,7 +205,8 @@ validate_deploy_user_host() {
 }
 
 assert_deploy_ssh_key_readable() {
-    local key="${DEPLOY_SSH_KEY:-$HOME/.ssh/my_deploy_key.pem}"
+    ci::env_default DEPLOY_SSH_KEY "$HOME/.ssh/my_deploy_key.pem"
+    local key="$DEPLOY_SSH_KEY"
     [ -f "$key" ] || { ci::die "SSH key not found: $key"; exit 1; }
     [ -r "$key" ] || { ci::die "SSH key not readable: $key"; exit 1; }
     export DEPLOY_SSH_KEY="$key"
@@ -298,7 +301,8 @@ main() {
     run_deploy_hooks
 
     if [ "${DEPLOY_RAN:-0}" = "1" ]; then
-        ci::slack_webhook SLACK_WEBHOOK_URL "${SLACK_PROJECT_NAME:-my-app}" "success" "Build and deploy completed successfully."
+        ci::env_default SLACK_PROJECT_NAME "my-app"
+        ci::slack_webhook SLACK_WEBHOOK_URL "$SLACK_PROJECT_NAME" "success" "Build and deploy completed successfully."
     fi
 }
 
