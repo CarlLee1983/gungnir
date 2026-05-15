@@ -66,7 +66,7 @@ assert_status 0 "$RUN_STATUS" "CLI version gt 1.2.4 1.2.3 exits 0"
 
 run_capture "$ROOT_DIR/ci-toolkit" version
 assert_status 0 "$RUN_STATUS" "CLI version (no args) still exits 0"
-assert_contains "$RUN_STDOUT" "ci-toolkit 0.1.8" \
+assert_contains "$RUN_STDOUT" "ci-toolkit 0.1.9" \
   "CLI version (no args) still prints toolkit + version"
 
 run_capture "$ROOT_DIR/ci-toolkit" version gt 1.2.3
