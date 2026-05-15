@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.7 - Hardened helpers and release-check
+
+- `ci::slack_webhook` now JSON-escapes `\`, `"`, `\n`, `\r`, and `\t` in `PROJECT`, `STATUS`, and `MESSAGE` before posting. Previously a quote or backslash in the message produced invalid JSON and the Slack webhook rejected the call. Added regression tests in `tests/test_slack_webhook.sh`.
+- Made the `sort -V` dependency explicit. `ci::version_gt`, `ci::version_ge`, and `ci::git_latest_tag` now probe once per shell via the new private helper `ci::_require_sort_v` and return `1` with a remediation hint (`brew install coreutils`) when `sort -V` is unavailable. `ci::ls` now also hides `ci::_*` private helpers from discovery output.
+- Added `release-check examples` (and wired it into `release-check all`). Scans `examples/**/*.{md,sh}` for `releases/download/vX.Y.Z/ci-toolkit` URLs and `Vendor Gungnir ci-toolkit vX.Y.Z` commit-message strings, failing if any pin diverges from `CI_TOOLKIT_VERSION`.
+- README and the Laravel blue-green example now document the helpers that landed in v0.1.6 (`ci::version_gt`, `ci::version_ge`, `ci::strip_prefix`, `ci::trap_err`). The Laravel example deletes its temporary `strip_tag_prefix` / `compare_versions_or_exit` helpers and calls the real `ci::*` helpers directly; `compose_err_trap` stays project-local because `ci::trap_err` is intentionally callback-less.
+
 ## v0.1.6 - Added utility helpers
 
 - Added `ci::version_gt` and `ci::version_ge` helpers for semver-style comparison, backed by `sort -V`. Accepts `vX.Y.Z`, `X.Y.Z`, `X.Y`, and simple pre-release tags. CLI: `ci-toolkit version gt LHS RHS` / `ci-toolkit version ge LHS RHS` — the no-arg `version` form is preserved.

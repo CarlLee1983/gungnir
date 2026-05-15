@@ -29,7 +29,7 @@ assert_not_contains "$RUN_STDOUT$RUN_STDERR" "Usage:" "source mode does not prin
 run_capture "$ROOT_DIR/ci-toolkit" version
 assert_status 0 "$RUN_STATUS" "version command exits zero"
 assert_contains "$RUN_STDOUT" "ci-toolkit" "version command prints tool name"
-assert_eq "ci-toolkit 0.1.6" "${RUN_STDOUT%$'\n'}" "version command prints normalized 0.1.6"
+assert_eq "ci-toolkit 0.1.7" "${RUN_STDOUT%$'\n'}" "version command prints normalized 0.1.7"
 
 run_capture "$ROOT_DIR/ci-toolkit" help
 assert_status 0 "$RUN_STATUS" "help command exits zero"

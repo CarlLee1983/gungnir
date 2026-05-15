@@ -95,12 +95,14 @@ else
   fail "source retry 3 --delay 1 should sleep ≥2s, elapsed=${elapsed}s"
 fi
 
-# #4: --delay 5 with ATTEMPTS=1 → no "between", no sleep
+# #4: --delay 5 with ATTEMPTS=1 → no "between", no sleep.
+# The < 3 ceiling tolerates wall-clock drift under heavy parallel load while
+# still detecting any real `sleep 5` execution.
 start=$SECONDS
 run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::retry 1 --delay 5 false"
 elapsed=$(( SECONDS - start ))
 assert_status 1 "$RUN_STATUS" "source retry 1 --delay 5 returns command status"
-if [[ "$elapsed" -lt 1 ]]; then
+if [[ "$elapsed" -lt 3 ]]; then
   pass "source retry 1 --delay 5 never sleeps (elapsed=${elapsed}s)"
 else
   fail "source retry 1 --delay 5 should not sleep, elapsed=${elapsed}s"
