@@ -388,6 +388,17 @@ ci::strip_prefix() {
   printf '%s\n' "${value#"$prefix"}"
 }
 
+# @description Print argv as a Bash-escaped command string suitable for re-parsing by Bash (e.g. rsync -e).
+ci::shell_join() {
+  if [[ $# -lt 1 ]]; then
+    ci::error "Usage: ci::shell_join ARG..."
+    return 64
+  fi
+  local joined
+  printf -v joined '%q ' "$@"
+  printf '%s\n' "${joined% }"
+}
+
 # @description Install a default ERR trap that prints exit code, file:line, function, and BASH_COMMAND.
 ci::trap_err() {
   set -E
