@@ -173,6 +173,26 @@ ci::is_true() {
   [[ "${!name:-0}" == "1" || "${!name:-}" == "true" ]]
 }
 
+# @description Require PATH to exist and be a regular file. Reports NAME, never PATH.
+ci::require_file() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::require_file NAME PATH [HINT]"
+    return 64
+  fi
+  local name="$1"
+  local path="$2"
+  local hint="${3:-}"
+  if [[ -f "$path" ]]; then
+    return 0
+  fi
+  if [[ -n "$hint" ]]; then
+    ci::error "required file missing: $name ($hint)"
+  else
+    ci::error "required file missing: $name"
+  fi
+  return 1
+}
+
 # @description Return 0 iff ACTUAL string-equals EXPECTED. Never prints values.
 ci::eq() {
   if [[ $# -lt 2 ]]; then
