@@ -83,4 +83,22 @@ assert_status 64 "$RUN_STATUS" "source ci::in missing candidates exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::in" \
   "source ci::in missing candidates prints usage"
 
+# -- Source mode: ci::not_in (spec §4.4, §7.1 #13–#16) --------------------
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::not_in qa dev staging prod"
+assert_status 0 "$RUN_STATUS" "source ci::not_in no-match exits 0"
+assert_eq "" "$RUN_STDOUT" "source ci::not_in no-match writes no stdout"
+assert_eq "" "$RUN_STDERR" "source ci::not_in no-match writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::not_in staging dev staging prod"
+assert_status 1 "$RUN_STATUS" "source ci::not_in match exits 1"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::not_in '' dev staging"
+assert_status 0 "$RUN_STATUS" "source ci::not_in empty-value no-match exits 0"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::not_in staging"
+assert_status 64 "$RUN_STATUS" "source ci::not_in missing candidates exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::not_in" \
+  "source ci::not_in missing candidates prints usage"
+
 finish_tests

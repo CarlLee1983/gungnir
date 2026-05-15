@@ -208,6 +208,18 @@ ci::in() {
   return 1
 }
 
+# @description Return 0 iff VALUE matches none of the CANDIDATE arguments.
+ci::not_in() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::not_in VALUE CANDIDATE..."
+    return 64
+  fi
+  if ci::in "$@"; then
+    return 1
+  fi
+  return 0
+}
+
 # @description Find a marker file by searching up the directory tree.
 ci::find_up() {
   local marker="${1:-}"
