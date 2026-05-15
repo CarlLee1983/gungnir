@@ -9,5 +9,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 bash -c "source '$ROOT_DIR/ci-toolkit' && ci::info 'ok'" >/dev/null
 "$ROOT_DIR/ci-toolkit" strip-prefix v v0.1.6 | grep -q '^0\.1\.6$'
 "$ROOT_DIR/ci-toolkit" version gt 0.1.6 0.1.5
+"$ROOT_DIR/ci-toolkit" eq 0.1.8 0.1.8
+"$ROOT_DIR/ci-toolkit" in staging dev staging prod
+"$ROOT_DIR/ci-toolkit" not-in qa dev staging prod
 
 printf 'Smoke checks passed\n'
