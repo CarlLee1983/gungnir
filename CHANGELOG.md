@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.10 - require_match invalid-regex hardening
+
+- `ci::require_match` (and the matching `ci-toolkit match require` CLI command) now wrap the case where `REGEX` is unparseable. Previously Bash leaked its native `[[: invalid regular expression` message to stderr before the toolkit error, and the helper returned `1` (validation failure). It now probes the regex once with stderr suppressed; on parse failure (status `2`) it emits `[error] invalid regex for NAME` and returns `64` (usage error). Valid regex paths — including the no-match case — are unchanged.
+- Added regression coverage in `tests/test_validation_helpers.sh` for both source mode and CLI mode: status `64`, stderr contains `invalid regex`, stderr does not contain Bash's native `invalid regular expression`, `VALUE` never appears in stderr.
+
 ## v0.1.9 - Validation and shell-join helpers
 
 - Added four public validation helpers: `ci::require_file NAME PATH [HINT]`, `ci::require_dir NAME PATH [HINT]`, `ci::require_match NAME VALUE REGEX [DESCRIPTION]`, and `ci::require_uint NAME VALUE`. All four return `0` on success, `1` on validation failure (stderr names `NAME` and, for `require_match`, the rule description or raw regex), and `64` on usage error. They never echo `VALUE` or `PATH` into stderr, which keeps them safe for sensitive inputs.
