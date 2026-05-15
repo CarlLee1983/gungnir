@@ -214,11 +214,72 @@ assert_contains "$RUN_STDOUT" "boundary: ok" "release-check all: ran boundary ch
 assert_contains "$RUN_STDOUT" "copy-smoke: ok" "release-check all: ran copy-smoke"
 assert_contains "$RUN_STDOUT" "descriptions: ok" \
   "release-check all: ran descriptions check"
+assert_contains "$RUN_STDOUT" "examples: ok" \
+  "release-check all: ran examples check"
 assert_contains "$RUN_STDOUT" "gates:" "release-check all: ran gates check"
 assert_contains "$RUN_STDOUT" "docs " \
   "release-check all: gates summary reports docs status"
 assert_contains "$RUN_STDOUT" "release-check: all checks passed" \
   "release-check all: prints final summary"
+
+# examples subcommand: matching version pin in synthetic examples must pass.
+examples_ok_tmp="$(make_temp_dir)"
+cat >"$examples_ok_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="9.9.9"
+EOF
+mkdir -p "$examples_ok_tmp/examples/foo"
+cat >"$examples_ok_tmp/examples/foo/README.md" <<'EOF'
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v9.9.9/ci-toolkit -o ci-toolkit
+git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v9.9.9"
+EOF
+run_capture "$RELEASE_CHECK" examples "$examples_ok_tmp/ci-toolkit" "$examples_ok_tmp/examples"
+assert_status 0 "$RUN_STATUS" "release-check examples: matching pins exit zero"
+assert_contains "$RUN_STDOUT" "examples: ok (v9.9.9)" \
+  "release-check examples: prints ok with version"
+
+# examples subcommand: stale install URL pin must fail.
+examples_stale_tmp="$(make_temp_dir)"
+cat >"$examples_stale_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="9.9.9"
+EOF
+mkdir -p "$examples_stale_tmp/examples/foo"
+cat >"$examples_stale_tmp/examples/foo/README.md" <<'EOF'
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v9.9.8/ci-toolkit -o ci-toolkit
+EOF
+run_capture "$RELEASE_CHECK" examples "$examples_stale_tmp/ci-toolkit" "$examples_stale_tmp/examples"
+assert_status 1 "$RUN_STATUS" "release-check examples: stale install URL exits non-zero"
+assert_contains "$RUN_STDERR" "stale version pin" \
+  "release-check examples: explains stale pin on stderr"
+assert_contains "$RUN_STDERR" "v9.9.8" \
+  "release-check examples: stderr names the offending version"
+
+# examples subcommand: stale vendor commit message must also fail.
+examples_vendor_tmp="$(make_temp_dir)"
+cat >"$examples_vendor_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="9.9.9"
+EOF
+mkdir -p "$examples_vendor_tmp/examples/bar"
+cat >"$examples_vendor_tmp/examples/bar/README.md" <<'EOF'
+git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v9.9.0"
+EOF
+run_capture "$RELEASE_CHECK" examples "$examples_vendor_tmp/ci-toolkit" "$examples_vendor_tmp/examples"
+assert_status 1 "$RUN_STATUS" "release-check examples: stale vendor message exits non-zero"
+assert_contains "$RUN_STDERR" "v9.9.0" \
+  "release-check examples: stderr names the vendor-message version"
+
+# examples subcommand: missing examples dir is a no-op, not an error.
+examples_empty_tmp="$(make_temp_dir)"
+cat >"$examples_empty_tmp/ci-toolkit" <<'EOF'
+#!/usr/bin/env bash
+CI_TOOLKIT_VERSION="9.9.9"
+EOF
+run_capture "$RELEASE_CHECK" examples "$examples_empty_tmp/ci-toolkit" "$examples_empty_tmp/examples"
+assert_status 0 "$RUN_STATUS" "release-check examples: missing dir exits zero"
+assert_contains "$RUN_STDOUT" "no examples dir" \
+  "release-check examples: explains missing dir on stdout"
 
 # gates subcommand: recursion guard must skip scripts/test when RC_INSIDE_GATES is set.
 RC_INSIDE_GATES=1 run_capture "$RELEASE_CHECK" gates

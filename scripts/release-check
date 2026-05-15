@@ -191,6 +191,42 @@ rc::gates() {
     "$tests_status" "$lint_status" "$docs_status"
 }
 
+rc::examples() {
+  local target_file="${1:-$ROOT_DIR/ci-toolkit}"
+  local examples_dir="${2:-$ROOT_DIR/examples}"
+
+  local constant
+  constant="$(rc::toolkit_version "$target_file")"
+  if [[ -z "$constant" ]]; then
+    printf 'examples: could not parse CI_TOOLKIT_VERSION from %s\n' \
+      "$target_file" >&2
+    return 1
+  fi
+
+  if [[ ! -d "$examples_dir" ]]; then
+    printf 'examples: ok (no examples dir at %s)\n' "$examples_dir"
+    return 0
+  fi
+
+  local mismatches=""
+  while IFS= read -r -d '' file; do
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      mismatches+="$file: $line"$'\n'
+    done < <(grep -nE 'releases/download/v[0-9][^/[:space:]]*/ci-toolkit|Vendor Gungnir ci-toolkit v[0-9][^[:space:]"]*' "$file" 2>/dev/null \
+      | grep -Ev "v${constant}([/[:space:]\"]|$)" || true)
+  done < <(find "$examples_dir" -type f \( -name '*.md' -o -name '*.sh' \) -print0)
+
+  if [[ -n "$mismatches" ]]; then
+    printf '%s' "$mismatches" >&2
+    printf 'examples: stale version pin(s) found; expected v%s\n' \
+      "$constant" >&2
+    return 1
+  fi
+
+  printf 'examples: ok (v%s)\n' "$constant"
+}
+
 main() {
   local subcommand="${1:-all}"
   if [[ "$#" -gt 0 ]]; then
@@ -213,6 +249,9 @@ main() {
     descriptions)
       rc::descriptions "$@"
       ;;
+    examples)
+      rc::examples "$@"
+      ;;
     gates)
       rc::gates "$@"
       ;;
@@ -223,10 +262,11 @@ main() {
       rc::boundary
       rc::descriptions
       rc::copy_smoke
+      rc::examples
       printf 'release-check: all checks passed\n'
       ;;
     *)
-      printf 'usage: release-check [version|artifact|boundary|copy-smoke|descriptions|gates|all]\n' >&2
+      printf 'usage: release-check [version|artifact|boundary|copy-smoke|descriptions|examples|gates|all]\n' >&2
       return 64
       ;;
   esac
