@@ -191,6 +191,23 @@ ci::ne() {
   [[ "$1" != "$2" ]]
 }
 
+# @description Return 0 iff VALUE string-equals any of the CANDIDATE arguments.
+ci::in() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::in VALUE CANDIDATE..."
+    return 64
+  fi
+  local value="$1"
+  shift
+  local candidate
+  for candidate in "$@"; do
+    if [[ "$value" == "$candidate" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # @description Find a marker file by searching up the directory tree.
 ci::find_up() {
   local marker="${1:-}"

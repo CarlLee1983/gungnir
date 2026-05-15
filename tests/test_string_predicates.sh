@@ -65,4 +65,22 @@ assert_status 64 "$RUN_STATUS" "source ci::ne missing arg exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::ne" \
   "source ci::ne missing arg prints usage"
 
+# -- Source mode: ci::in (spec §4.3, §7.1 #9–#12) -------------------------
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::in staging dev staging prod"
+assert_status 0 "$RUN_STATUS" "source ci::in match exits 0"
+assert_eq "" "$RUN_STDOUT" "source ci::in match writes no stdout"
+assert_eq "" "$RUN_STDERR" "source ci::in match writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::in qa dev staging prod"
+assert_status 1 "$RUN_STATUS" "source ci::in no-match exits 1"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::in '' dev '' prod"
+assert_status 0 "$RUN_STATUS" "source ci::in empty-value matches empty candidate"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::in staging"
+assert_status 64 "$RUN_STATUS" "source ci::in missing candidates exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::in" \
+  "source ci::in missing candidates prints usage"
+
 finish_tests
