@@ -117,6 +117,11 @@ mismatching symlink at the destination.
 | `ne ACTUAL EXPECTED` | Exit `0` iff `ACTUAL` string-differs from `EXPECTED`. Never prints compared values. |
 | `in VALUE CANDIDATE...` | Exit `0` iff `VALUE` string-equals any `CANDIDATE`. Literal comparison; no glob/regex. |
 | `not-in VALUE CANDIDATE...` | Exit `0` iff `VALUE` matches no `CANDIDATE`. Literal comparison; no glob/regex. |
+| `file require NAME PATH [HINT]` | Exit `1` if `PATH` does not exist or is not a regular file. Reports `NAME`, never the path. |
+| `dir require NAME PATH [HINT]` | Exit `1` if `PATH` does not exist or is not a directory. Reports `NAME`, never the path. |
+| `match require NAME VALUE REGEX [DESCRIPTION]` | Exit `1` if `VALUE` does not match the Bash extended `REGEX`. Reports `NAME` and `DESCRIPTION` (or the raw regex if omitted), never `VALUE`. |
+| `uint require NAME VALUE` | Exit `1` if `VALUE` is not a non-negative base-10 integer. Reports `NAME`, never `VALUE`. |
+| `shell join ARG...` | Print `ARG...` as a Bash-escaped command string suitable for re-parsing by Bash (e.g. `rsync -e`). |
 | `strip-prefix PREFIX STRING` | Print `STRING` with a leading literal `PREFIX` removed (no-op if absent). |
 | `trap-err` | Source-mode only. From the CLI, prints a usage hint and exits `64`. |
 | `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. Requires `sort -V`. |
@@ -148,6 +153,10 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | `ci::env_default VAR_NAME DEFAULT` | Set `VAR_NAME` to `DEFAULT` in the current shell if it is unset or empty. |
 | `ci::is_true VAR_NAME` | Return `0` if variable is `1` or `true`. |
 | `ci::require_tool TOOL_NAME` | Return `1` if `TOOL_NAME` is not resolvable via `command -v`. |
+| `ci::require_file NAME PATH [HINT]` | Return `1` if `PATH` does not exist or is not a regular file. Reports `NAME`, never `PATH`. Usage error returns `64`. |
+| `ci::require_dir NAME PATH [HINT]` | Return `1` if `PATH` does not exist or is not a directory. Reports `NAME`, never `PATH`. Usage error returns `64`. |
+| `ci::require_match NAME VALUE REGEX [DESCRIPTION]` | Return `1` if `VALUE` does not match Bash extended `REGEX`. Reports `NAME` and `DESCRIPTION` (or the raw regex), never `VALUE`. Usage error returns `64`. |
+| `ci::require_uint NAME VALUE` | Return `1` if `VALUE` is not a non-negative base-10 integer (no sign, no decimal). Reports `NAME`, never `VALUE`. Usage error returns `64`. |
 
 ### Flow control
 
@@ -164,6 +173,12 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | `ci::ne ACTUAL EXPECTED` | Return `0` iff `ACTUAL != EXPECTED`. Never prints compared values; usage error returns `64`. |
 | `ci::in VALUE CANDIDATE...` | Return `0` iff `VALUE` string-equals any `CANDIDATE`. Literal comparison; no glob/regex. Usage error (fewer than 2 args) returns `64`. |
 | `ci::not_in VALUE CANDIDATE...` | Return `0` iff `VALUE` matches none of the `CANDIDATE` arguments. Literal comparison; no glob/regex. Usage error returns `64`. |
+
+### Shell escaping
+
+| Function | Description |
+| --- | --- |
+| `ci::shell_join ARG...` | Print `ARG...` as a Bash-escaped command string suitable for re-parsing by Bash (e.g. as the value of `rsync -e`). Uses `printf '%q'`; the output is Bash-escaped, not POSIX-sh portable. Zero args returns `64`. |
 
 ### Strings & versions
 
