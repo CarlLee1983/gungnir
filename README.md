@@ -113,6 +113,10 @@ mismatching symlink at the destination.
 | `env default VAR_NAME DEFAULT` | Print the value of `VAR_NAME`, or `DEFAULT` if it is unset or empty. |
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
 | `retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times (default `3`). `--delay` sleeps `SECONDS` between failed attempts; defaults to `0`. Returns the last attempt's exit status. |
+| `eq ACTUAL EXPECTED` | Exit `0` iff `ACTUAL` string-equals `EXPECTED`. Never prints compared values. |
+| `ne ACTUAL EXPECTED` | Exit `0` iff `ACTUAL` string-differs from `EXPECTED`. Never prints compared values. |
+| `in VALUE CANDIDATE...` | Exit `0` iff `VALUE` string-equals any `CANDIDATE`. Literal comparison; no glob/regex. |
+| `not-in VALUE CANDIDATE...` | Exit `0` iff `VALUE` matches no `CANDIDATE`. Literal comparison; no glob/regex. |
 | `strip-prefix PREFIX STRING` | Print `STRING` with a leading literal `PREFIX` removed (no-op if absent). |
 | `trap-err` | Source-mode only. From the CLI, prints a usage hint and exits `64`. |
 | `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. Requires `sort -V`. |
@@ -151,6 +155,15 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | --- | --- |
 | `ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND...` | Run `COMMAND` up to `ATTEMPTS` times. `--delay` sleeps `SECONDS` between failed attempts (default `0`). Returns `0` on first success, otherwise returns the final attempt's exit status. Failed attempts log a `warn` line. |
 | `ci::trap_err` | Install a default `ERR` trap that prints exit code, file:line, function, and `BASH_COMMAND` to **stderr**. Sets `set -E` so the trap inherits into shell functions. Source-mode only — the CLI command exits `64` with a hint. |
+
+### String predicates
+
+| Function | Description |
+| --- | --- |
+| `ci::eq ACTUAL EXPECTED` | Return `0` iff `ACTUAL == EXPECTED` (literal Bash string equality). Never prints compared values; usage error returns `64`. |
+| `ci::ne ACTUAL EXPECTED` | Return `0` iff `ACTUAL != EXPECTED`. Never prints compared values; usage error returns `64`. |
+| `ci::in VALUE CANDIDATE...` | Return `0` iff `VALUE` string-equals any `CANDIDATE`. Literal comparison; no glob/regex. Usage error (fewer than 2 args) returns `64`. |
+| `ci::not_in VALUE CANDIDATE...` | Return `0` iff `VALUE` matches none of the `CANDIDATE` arguments. Literal comparison; no glob/regex. Usage error returns `64`. |
 
 ### Strings & versions
 
