@@ -22,18 +22,14 @@
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
         }
         @layer base {
-            html {
-                scroll-behavior: smooth;
-            }
-            body {
-                @apply bg-background text-text-main antialiased selection:bg-primary/10;
-                font-family: var(--font-sans);
-            }
-            h1, h2, h3 { font-family: var(--font-display); }
+            html { scroll-behavior: smooth; }
+            body { @apply bg-background text-text-main antialiased selection:bg-primary/10; font-family: var(--font-sans); }
+            h1, h2, h3, h4 { font-family: var(--font-display); }
             h1 { @apply text-5xl font-black tracking-tight mt-16 mb-8 text-text-main; }
             h2 { @apply text-3xl font-bold tracking-tight mt-16 mb-8 flex items-center gap-3 text-text-main; }
             h2::after { content: ""; @apply h-px flex-1 bg-border ml-4; }
             h3 { @apply text-xl font-bold mt-12 mb-6 text-text-main; }
+            h4 { @apply text-lg font-bold mt-8 mb-4 text-text-main; }
             p { @apply mb-6 leading-relaxed text-text-muted text-[1.05rem]; }
             ul { @apply list-none mb-8 space-y-3; }
             li { @apply flex items-start gap-3 text-text-muted; }
@@ -43,35 +39,22 @@
             pre code { @apply bg-transparent p-0 text-[#EDE8E4] text-[0.9rem] leading-relaxed border-none; }
             table { @apply w-full border-collapse mb-10 text-sm text-left rounded-lg overflow-hidden border border-border bg-surface shadow-sm; }
             th { @apply bg-background/50 px-6 py-4 font-bold text-text-main border-b border-border; }
-            td { @apply px-6 py-4 border-b border-border text-text-muted; }
+            td { @apply px-6 py-4 border-b border-border text-text-muted align-top; }
             tr:last-child td { @apply border-none; }
             tr:hover td { @apply bg-background/30 transition-colors; }
         }
-        .paper-card {
-            @apply bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300;
-        }
-        .nav-link {
-            @apply block py-2 px-4 rounded-md text-text-muted hover:text-primary transition-colors font-medium;
-        }
-        .nav-link.active {
-            @apply text-primary font-bold border-l-2 border-primary bg-primary/5 rounded-none;
-        }
+        .paper-card { @apply bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300; }
+        .nav-link { @apply block py-2 px-4 rounded-md text-text-muted hover:text-primary transition-colors font-medium; }
+        .nav-link.active { @apply text-primary font-bold border-l-2 border-primary bg-primary/5 rounded-none; }
     </style>
 </head>
 <body class="flex min-h-screen">
-
-    <!-- Sidebar -->
     <nav class="hidden lg:block w-80 h-screen sticky top-0 self-start bg-surface border-r border-border p-8 overflow-y-auto shrink-0 transition-all z-50">
         <div class="flex items-center gap-3 mb-12">
-            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <span class="text-white font-black text-xl">G</span>
-            </div>
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm"><span class="text-white font-black text-xl">G</span></div>
             <span class="text-2xl font-black tracking-tight text-text-main">Gungnir</span>
         </div>
-
-        <div class="space-y-8">
-            <section>
-                <ul class="list-none space-y-1 p-0 m-0">
+        <div class="space-y-8"><section><ul class="list-none space-y-1 p-0 m-0">
                     <li class="nav-item"><a href="#overview" class="nav-link">概覽</a></li>
                     <li class="nav-item"><a href="#install-setup" class="nav-link">安裝與設定</a></li>
                     <li class="nav-item"><a href="#connections" class="nav-link">環境與初始化</a></li>
@@ -81,279 +64,483 @@
                     <li class="nav-item"><a href="#diagnostics-recovery" class="nav-link">診斷與恢復</a></li>
                     <li class="nav-item"><a href="#ai-integration" class="nav-link">AI 代理整合</a></li>
                     <li class="nav-item"><a href="#documentation-maintenance" class="nav-link">文件維護</a></li>
-                </ul>
-            </section>
-        </div>
+        </ul></section></div>
     </nav>
 
-    <!-- Main Content -->
     <main class="flex-1 p-6 lg:p-16 max-w-5xl mx-auto">
         <!-- doc-key: overview -->
         <section id="overview" class="py-12">
-            <h1>Gungnir</h1>
-            <p class="text-xl font-medium text-text-muted max-w-3xl leading-relaxed">
-                實驗性的平台中立 CI 腳本 Bash 輔助工具
-            </p>
-            <p>
-                Gungnir 是一個實驗性的、平台中立的 Bash 工具包，旨在簡化 CI/CD 腳本。它提供單一檔案，既可以作為 CLI 工具執行，也可以作為可引入（source）的 Bash 函式庫，整合了結構化日誌記錄、環境變數驗證和穩健的指令重試等常見模式。
-            </p>
-            <div class="flex gap-4 mt-8">
-                <a href="https://github.com/CMG/Gungnir" class="px-6 py-3 bg-surface border border-border rounded-md font-bold text-text-main hover:bg-background transition-all">GitHub</a>
-            </div>
+<h1>Gungnir</h1>
+<p>實驗性的平台中立 CI 腳本 Bash 輔助工具。</p>
+<p>Gungnir 只發佈一個檔案：<code>ci-toolkit</code>。你可以直接把它當 CLI 執行，也可以在 Bash 腳本中 <code>source</code> 它，取得 <code>ci::</code> 命名空間下的函式。它刻意保持小而專注：處理日誌、環境檢查、指令重試、路徑探索、版本比較、資料驗證、shell 參數逃逸與簡易通知等 CI 腳本常見原語。它<strong>不</strong>內建 GitHub Actions、GitLab、CircleCI、Docker、build 或 deploy 政策。</p>
+<p>當你的 CI 腳本開始累積手寫的 <code>log()</code>、<code>fatal()</code>、<code>retry()</code>、<code>require_env()</code> 或「尋找 repo root」片段時，就適合使用 Gungnir。專案特有的決策仍留在你的腳本；重複、容易寫錯的基礎工作交給 toolkit。</p>
+<h2>你會得到什麼</h2>
+<ul>
+<li><strong>單一 artifact</strong>：下載 <code>ci-toolkit</code>、加上可執行權限，就能像一般腳本一樣提交或快取。</li>
+<li><strong>兩種模式</strong>：CLI 模式適合單行指令；source 模式適合完整腳本。</li>
+<li><strong>安全輸出契約</strong>：日誌走 stderr；資料走 stdout；驗證失敗只印欄位名稱，不印秘密值。</li>
+<li><strong>可預期的失敗</strong>：source 函式回傳 status，不會自行 <code>exit</code>；CLI 使用錯誤回傳 <code>64</code>。</li>
+<li><strong>只需要 Bash 4+</strong>：沒有 build step、沒有 package manager、沒有常駐服務。</li>
+</ul>
         </section>
 
         <!-- doc-key: install-setup -->
         <section id="install-setup">
-            <h2>安裝與設定</h2>
-            <p>直接在您的 CI 環境中使用 <code>curl</code> 和 <code>chmod</code> 安裝 <code>ci-toolkit</code> 檔案。我們建議固定到特定的發佈標籤（release tag）以確保穩定性：</p>
-            <pre><code>curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit -o ci-toolkit
+<h2>安裝與設定</h2>
+<h3 id="requirements">需求</h3>
+<ul>
+<li>Bash 4+。較舊的 macOS <code>/bin/bash</code> 是 3.2；請用 <code>brew install bash</code> 安裝新版 Bash，並讓腳本使用 <code>#!/usr/bin/env bash</code>。</li>
+<li>標準 shell 工具需在 <code>PATH</code> 上。</li>
+<li>若使用 <code>ci::version_gt</code>、<code>ci::version_ge</code> 或 <code>ci::git_latest_tag</code>，需要支援 <code>sort -V</code> 的 <code>sort</code>。toolkit 會自行探測，缺少時會印出修復提示。</li>
+<li>選用：若要用 <code>./scripts/lint</code> 做本地 lint，需安裝 <code>shellcheck</code>。</li>
+</ul>
+<h3 id="install-pinned-release">安裝固定版本</h3>
+<p>CI 中建議固定 release tag。除非你明確想追實驗性變更，否則不要在正式 automation 裡 curl <code>main</code>。</p>
+<pre><code class="language-bash">curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version</code></pre>
-            <p>對於本地開發或作為 AI 技能，您可以使用提供的 <code>scripts/install-skill</code> 將工具包軟連結（symlink）到您的 Claude Code 技能目錄中。</p>
+<p>預期輸出：</p>
+<pre><code class="language-text">ci-toolkit 0.1.10</code></pre>
+<h3 id="vendor">Vendor 到腳本旁邊</h3>
+<p>若腳本要在 CI host、部署機或開發者電腦上執行，最穩定的方式是把固定版本放在使用它的腳本旁邊。</p>
+<pre><code class="language-bash">mkdir -p infra/ci
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit \
+  -o infra/ci/ci-toolkit
+chmod +x infra/ci/ci-toolkit
+git add infra/ci/ci-toolkit
+git commit -m &quot;Vendor Gungnir ci-toolkit v0.1.10&quot;</code></pre>
+<p>在腳本中用「相對於腳本本身」的路徑載入，而不是依賴呼叫者目前目錄：</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
 
-            <h3>對比：為什麼要使用 Gungnir？</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>任務</th>
-                        <th>原始 Bash 語法</th>
-                        <th>Gungnir <code>ci-toolkit</code></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>日誌記錄</strong></td>
-                        <td><code>echo "[INFO] starting"</code></td>
-                        <td><code>ci::info "starting"</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>環境變數檢查</strong></td>
-                        <td><code>if [[ -z "$TOKEN" ]]; then ...</code></td>
-                        <td><code>ci::require_env TOKEN</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>指令重試</strong></td>
-                        <td><code>for i in {1..3}; do ...</code></td>
-                        <td><code>ci::retry 3 cmd</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>路徑定位</strong></td>
-                        <td><code>$(cd "$(dirname "$0")"/.. && pwd)</code></td>
-                        <td><code>ci::root</code></td>
-                    </tr>
-                </tbody>
-            </table>
+readonly SCRIPT_DIR=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)
+# shellcheck source=./ci-toolkit
+source &quot;$SCRIPT_DIR/ci-toolkit&quot;</code></pre>
+<h3 id="cli">CLI 快速檢查</h3>
+<pre><code class="language-bash">./ci-toolkit help
+./ci-toolkit ls
+./ci-toolkit log info &quot;toolkit is installed&quot;
+./ci-toolkit env require HOME
+./ci-toolkit tool require git</code></pre>
+<h3 id="bash-vs-gungnir">原始 Bash vs Gungnir</h3>
+<table><thead><tr><th>任務</th><th>原始 Bash 語法</th><th>Gungnir <code>ci-toolkit</code></th></tr></thead><tbody>
+<tr><td><strong>日誌記錄</strong></td><td><code>echo &quot;[INFO] starting&quot; &gt;&amp;2</code></td><td><code>ci::info &quot;starting&quot;</code></td></tr>
+<tr><td><strong>環境變數檢查</strong></td><td><code>if [[ -z &quot;${TOKEN:-}&quot; ]]; then echo ...; exit 1; fi</code></td><td><code>ci::require_env TOKEN</code></td></tr>
+<tr><td><strong>工具檢查</strong></td><td>手寫 <code>command -v</code> 檢查與 exit handling</td><td><code>ci::require_tool git</code></td></tr>
+<tr><td><strong>指令重試</strong></td><td>自行維護 counter、sleep、最後 exit code</td><td><code>ci::retry 3 -- curl -fsS &quot;$URL&quot;</code></td></tr>
+<tr><td><strong>路徑定位</strong></td><td>固定深度 <code>cd &quot;$(dirname &quot;$0&quot;)/..&quot;</code> 片段</td><td><code>ci::root</code> 或 <code>ci::find_up marker</code></td></tr>
+<tr><td><strong>允許清單</strong></td><td><code>case &quot;$env&quot; in prod|staging) ...</code></td><td><code>ci::in &quot;$env&quot; prod staging</code></td></tr>
+</tbody></table>
+<h3 id="before-after-bash-vs-ci">Before / after：原始 Bash 語法 vs <code>ci::</code> 語法</h3>
+<p>Gungnir 的優點不是「Bash 做不到」，而是安全、完整的原始 Bash 寫法很冗長，而且很容易在 stderr、exit code、secret leakage 或邊界條件上寫錯。<code>ci::</code> 語法直接把意圖命名出來。</p>
+<h4 id="logging">日誌記錄</h4>
+<p>原始 Bash 常混用 stdout/stderr，或每個腳本 prefix 都不同：</p>
+<pre><code class="language-bash">echo &quot;starting deploy&quot;
+echo &quot;warning: cache missing&quot; &gt;&amp;2
+echo &quot;error: deploy failed&quot; &gt;&amp;2</code></pre>
+<p>使用 <code>ci::</code> 後，日誌格式一致且一律輸出到 stderr：</p>
+<pre><code class="language-bash">ci::info &quot;starting deploy&quot;
+ci::warn &quot;cache missing&quot;
+ci::error &quot;deploy failed&quot;</code></pre>
+<h4 id="required-environment-variables">必要環境變數</h4>
+<p>原始 Bash 檢查冗長，debug 時也容易意外印出 secret：</p>
+<pre><code class="language-bash">if [[ -z &quot;${DEPLOY_TOKEN:-}&quot; ]]; then
+  echo &quot;DEPLOY_TOKEN is required&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>使用 <code>ci::</code> 後，helper 以變數名稱檢查，永遠不印變數值：</p>
+<pre><code class="language-bash">ci::require_env DEPLOY_TOKEN || exit $?</code></pre>
+<h4 id="required-tools">必要工具</h4>
+<p>原始 Bash 每個腳本都要重複 <code>command -v</code> plumbing：</p>
+<pre><code class="language-bash">if ! command -v git &gt;/dev/null 2&gt;&amp;1; then
+  echo &quot;git is required&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>使用 <code>ci::</code> 後，語法直接描述 precondition：</p>
+<pre><code class="language-bash">ci::require_tool git || exit $?</code></pre>
+<h4 id="retry-flaky-command">重試不穩定指令</h4>
+<p>正確的原始 retry loop 必須保留最後 exit status、正確計算嘗試次數，且不要掩蓋 deterministic failure：</p>
+<pre><code class="language-bash">attempt=1
+max_attempts=3
+status=0
+while (( attempt &lt;= max_attempts )); do
+  curl -fsS &quot;$HEALTH_URL&quot; &amp;&amp; status=0 &amp;&amp; break
+  status=$?
+  echo &quot;attempt $attempt failed&quot; &gt;&amp;2
+  attempt=$((attempt + 1))
+done
+exit &quot;$status&quot;</code></pre>
+<p>使用 <code>ci::</code> 後，retry policy 是一行，實際被執行的 command 仍清楚可見：</p>
+<pre><code class="language-bash">ci::retry 3 -- curl -fsS &quot;$HEALTH_URL&quot;</code></pre>
+<p>要加入 delay 不必重寫 loop：</p>
+<pre><code class="language-bash">ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<h4 id="repository-root">尋找 repository root</h4>
+<p>原始 Bash 常假設固定目錄深度，腳本移動後就失效：</p>
+<pre><code class="language-bash">REPO_ROOT=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)/../..&quot; &amp;&amp; pwd)</code></pre>
+<p>使用 <code>ci::</code> 後，從目前工作目錄動態探索：</p>
+<pre><code class="language-bash">REPO_ROOT=$(ci::root) || exit $?</code></pre>
+<h4 id="validate-without-leaks">驗證值且不洩漏內容</h4>
+<p>原始 Bash 驗證常把被拒絕的值或路徑印出來：</p>
+<pre><code class="language-bash">if [[ ! &quot;$DEPLOY_USER&quot; =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo &quot;invalid deploy user: $DEPLOY_USER&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>使用 <code>ci::</code> 後，stderr 只出現邏輯欄位名與規則，不印敏感值：</p>
+<pre><code class="language-bash">ci::require_match DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27; || exit $?</code></pre>
+<h4 id="allow-list-checks">允許清單檢查</h4>
+<p>原始 Bash 的 <code>case</code> 可行，但重複出現時會快速膨脹：</p>
+<pre><code class="language-bash">case &quot;${TARGET_ENV:-}&quot; in
+  staging|production|preview) ;;
+  *)
+    echo &quot;unsupported TARGET_ENV&quot; &gt;&amp;2
+    exit 1
+    ;;
+esac</code></pre>
+<p>使用 <code>ci::</code> 後，允許值就是參數本身：</p>
+<pre><code class="language-bash">if ! ci::in &quot;${TARGET_ENV:-}&quot; staging production preview; then
+  ci::die &quot;unsupported TARGET_ENV&quot; || exit 1
+fi</code></pre>
         </section>
 
         <!-- doc-key: connections -->
         <section id="connections">
-            <h2>環境與初始化</h2>
-            <p>Gungnir 需要 <strong>Bash 4+</strong>。它被設計為平台中立，不對特定的 CI 供應商（如 GitHub Actions 或 GitLab）做任何假設。</p>
+<h2>環境與初始化</h2>
+<p>Gungnir 沒有伺服器端連線設定。這裡的「初始化」指的是你的腳本如何連接 toolkit：直接執行 CLI，或 source 到目前 Bash process。</p>
+<h3 id="choose-mode">選擇正確模式</h3>
+<table><thead><tr><th>模式</th><th>適用情境</th><th>行為</th></tr></thead><tbody>
+<tr><td><strong>Source 模式</strong></td><td>你正在寫有 function、branch、cleanup 或多步驟流程的腳本。</td><td><code>source ./ci-toolkit</code> 後呼叫 <code>ci::...</code>。helper 回傳 status，不會結束你的 shell。</td></tr>
+<tr><td><strong>CLI 模式</strong></td><td>你需要 Makefile、CI YAML step 或 shell pipeline 中的一行指令。</td><td>執行 <code>./ci-toolkit ...</code>。command 透過 process exit code 表達結果，usage error 印到 stderr。</td></tr>
+</tbody></table>
+<h3 id="source">Source 模式骨架</h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
 
-            <h3>Source 模式 vs CLI 模式</h3>
-            <ul>
-                <li><strong>Source 模式 (建議腳本使用)</strong>: <code>source ./ci-toolkit</code> 讓您可以使用 <code>ci::</code> 開頭的函式。這些函式會回傳狀態碼且**不會**呼叫 <code>exit</code>，讓您的腳本保有完全的控制權。</li>
-                <li><strong>CLI 模式</strong>: 直接執行 <code>./ci-toolkit</code>。發生錯誤時會以非零狀態碼 <code>exit</code>，適合放在 <code>workflow.yml</code> 或 <code>Makefile</code> 中的單行指令。</li>
-            </ul>
+readonly SCRIPT_DIR=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)
+source &quot;$SCRIPT_DIR/ci-toolkit&quot;
 
-            <h3>環境變數</h3>
-            <ul>
-                <li><strong><code>CI_TOOLKIT_DEBUG=1</code></strong>: 啟用詳細的偵錯日誌輸出至 stderr。</li>
-                <li><strong><code>ci::env_default VAR VALUE</code></strong>: 當變數未設定時，安全地設定一個預設值。</li>
-            </ul>
+main() {
+  ci::trap_err
+  ci::info &quot;starting checks&quot;
+
+  ci::require_tool git || exit $?
+  ci::require_env DEPLOY_TOKEN || exit $?
+
+  ci::retry 3 -- git fetch origin --quiet
+  ci::info &quot;done&quot;
+}
+
+main &quot;$@&quot;</code></pre>
+<h3 id="cli">CLI 模式範例</h3>
+<pre><code class="language-bash">./ci-toolkit log info &quot;starting checks&quot;
+./ci-toolkit env require DEPLOY_TOKEN
+./ci-toolkit tool require git
+./ci-toolkit retry 5 -- curl -fsS https://example.com/health
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<h3 id="exit-code">輸出與 exit code 契約</h3>
+<table><thead><tr><th>契約</th><th>說明</th></tr></thead><tbody>
+<tr><td>日誌</td><td><code>ci::log</code>、<code>ci::info</code>、<code>ci::warn</code>、<code>ci::error</code>、<code>ci::debug</code> 寫到 <strong>stderr</strong>。</td></tr>
+<tr><td>資料</td><td><code>ci::root</code>、<code>ci::find_up</code>、<code>ci::strip_prefix</code>、<code>ci::shell_join</code> 等回傳資料的 helper 寫到 <strong>stdout</strong>。</td></tr>
+<tr><td>Source failure</td><td>Source 函式回傳 status。若 guard 失敗要停止腳本，請明確接 `</td><td></td><td>exit $?`。</td></tr>
+<tr><td>CLI usage error</td><td>CLI 參數不正確回傳 <code>64</code>，usage 印到 stderr。</td></tr>
+<tr><td>Secret safety</td><td><code>require_env</code>、<code>require_file</code>、<code>require_dir</code>、<code>require_match</code>、<code>require_uint</code> 報告名稱/規則，不報告敏感值。</td></tr>
+</tbody></table>
+<h3 id="environment-variables">環境變數</h3>
+<table><thead><tr><th>變數</th><th>效果</th></tr></thead><tbody>
+<tr><td><code>CI_TOOLKIT_DEBUG=1</code></td><td>啟用 <code>ci::debug</code> / <code>log debug</code> 輸出。預設不顯示 debug log。</td></tr>
+</tbody></table>
+<p><code>ci::env_default VAR VALUE</code> 是 helper，不是設定變數。在 source 模式中，若 <code>VAR</code> 未設定或為空，它會在目前 shell 設定預設值。</p>
+<h3 id="cli-grammar">語法參考：CLI grammar</h3>
+<p>多數 CLI command 形狀如下：</p>
+<pre><code class="language-text">./ci-toolkit &lt;command&gt; [subcommand] [arguments...]</code></pre>
+<p>執行另一個 command 的 helper 會用 <code>--</code> 標示 toolkit option 結束、你的 command 開始：</p>
+<pre><code class="language-bash">./ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]</code></pre>
+<p>範例：</p>
+<pre><code class="language-bash">./ci-toolkit retry -- make test
+./ci-toolkit retry 5 -- curl -fsS &quot;$HEALTH_URL&quot;
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev</code></pre>
+<p>巢狀 CLI command 採「名詞在前、動作在後」：</p>
+<pre><code class="language-bash">./ci-toolkit env require DEPLOY_TOKEN
+./ci-toolkit env default DEPLOY_ENV staging
+./ci-toolkit tool require git
+./ci-toolkit file require SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;mount the key first&quot;
+./ci-toolkit dir require BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot;
+./ci-toolkit match require DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27;
+./ci-toolkit uint require RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot;
+./ci-toolkit shell join ssh -i &quot;$DEPLOY_SSH_KEY&quot; -p 22
+./ci-toolkit git latest-tag v
+./ci-toolkit slack webhook SLACK_WEBHOOK_URL my-service success &quot;deploy complete&quot;</code></pre>
+<h3 id="source-mode">語法參考：source-mode 規則</h3>
+<p>Source-mode helper 是一般 Bash function。它們不會 exit 你的腳本；只會回傳 status。依 helper 類型，把它放進 <code>if</code>、<code>||</code>、command substitution 或 assignment。</p>
+<pre><code class="language-bash">source ./ci-toolkit
+
+ci::require_env DEPLOY_TOKEN || exit $?
+ci::retry 3 -- git fetch origin --quiet
+if ci::in &quot;${TARGET_ENV:-}&quot; staging production; then ...; fi
+repo_root=$(ci::root) || exit $?</code></pre>
+<p>建議固定使用這些模式：</p>
+<pre><code class="language-bash"># 必要 precondition：guard 失敗就停止。
+ci::require_tool git || exit $?
+ci::require_env DEPLOY_TOKEN || exit $?
+
+# Predicate / optional branch：直接放進 if。
+if ci::is_true RUN_DEPLOY; then
+  run_deploy
+fi
+
+# Data helper：捕捉 stdout，再處理失敗。
+repo_root=$(ci::root) || exit $?
+latest_tag=$(ci::git_latest_tag v) || exit $?
+
+# 專案脈絡：predicate 搭配你的錯誤訊息。
+ci::version_gt &quot;$new&quot; &quot;$old&quot; || ci::die &quot;tag is not newer&quot; || exit 1</code></pre>
+<h3 id="source-cli">語法參考：source 與 CLI 對照</h3>
+<table><thead><tr><th>用途</th><th>Source 語法</th><th>CLI 語法</th><th>成功輸出</th></tr></thead><tbody>
+<tr><td>顯示 help</td><td>n/a</td><td><code>./ci-toolkit help</code></td><td>stdout usage</td></tr>
+<tr><td>顯示版本</td><td>n/a</td><td><code>./ci-toolkit version</code></td><td><code>ci-toolkit X.Y.Z</code></td></tr>
+<tr><td>列出函式</td><td><code>ci::ls</code></td><td><code>./ci-toolkit ls</code></td><td>stdout function list</td></tr>
+<tr><td>info log</td><td><code>ci::info MESSAGE...</code></td><td><code>./ci-toolkit log info MESSAGE</code></td><td>stderr log line</td></tr>
+<tr><td>warn log</td><td><code>ci::warn MESSAGE...</code></td><td><code>./ci-toolkit log warn MESSAGE</code></td><td>stderr log line</td></tr>
+<tr><td>error log</td><td><code>ci::error MESSAGE...</code></td><td><code>./ci-toolkit log error MESSAGE</code></td><td>stderr log line</td></tr>
+<tr><td>debug log</td><td><code>ci::debug MESSAGE...</code></td><td><code>./ci-toolkit log debug MESSAGE</code></td><td>只有 <code>CI_TOOLKIT_DEBUG=1</code> 時輸出 stderr</td></tr>
+<tr><td>die helper</td><td><code>ci::die MESSAGE...</code></td><td>n/a</td><td>error log；回傳 <code>1</code></td></tr>
+<tr><td>必要環境變數</td><td><code>ci::require_env VAR_NAME</code></td><td><code>./ci-toolkit env require VAR_NAME</code></td><td>無 stdout</td></tr>
+<tr><td>預設環境變數</td><td><code>ci::env_default VAR_NAME DEFAULT</code></td><td><code>./ci-toolkit env default VAR_NAME DEFAULT</code></td><td>有效值 stdout</td></tr>
+<tr><td>必要工具</td><td><code>ci::require_tool TOOL_NAME</code></td><td><code>./ci-toolkit tool require TOOL_NAME</code></td><td>無 stdout</td></tr>
+<tr><td>重試 command</td><td><code>ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND...</code></td><td><code>./ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND...</code></td><td>被包住 command 的輸出</td></tr>
+<tr><td>向上找 marker</td><td><code>ci::find_up MARKER</code></td><td>n/a</td><td>匹配目錄 stdout</td></tr>
+<tr><td>找 git root</td><td><code>ci::root</code></td><td>n/a</td><td>git root stdout</td></tr>
+<tr><td>最新 tag</td><td><code>ci::git_latest_tag [PREFIX]</code></td><td><code>./ci-toolkit git latest-tag [PREFIX]</code></td><td>tag stdout</td></tr>
+<tr><td>移除 prefix</td><td><code>ci::strip_prefix PREFIX STRING</code></td><td><code>./ci-toolkit strip-prefix PREFIX STRING</code></td><td>結果字串 stdout</td></tr>
+<tr><td>版本大於</td><td><code>ci::version_gt LHS RHS</code></td><td><code>./ci-toolkit version gt LHS RHS</code></td><td>status only</td></tr>
+<tr><td>版本大於等於</td><td><code>ci::version_ge LHS RHS</code></td><td><code>./ci-toolkit version ge LHS RHS</code></td><td>status only</td></tr>
+<tr><td>相等 predicate</td><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>./ci-toolkit eq ACTUAL EXPECTED</code></td><td>status only</td></tr>
+<tr><td>不相等 predicate</td><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>./ci-toolkit ne ACTUAL EXPECTED</code></td><td>status only</td></tr>
+<tr><td>允許清單 predicate</td><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>./ci-toolkit in VALUE CANDIDATE...</code></td><td>status only</td></tr>
+<tr><td>排除清單 predicate</td><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>./ci-toolkit not-in VALUE CANDIDATE...</code></td><td>status only</td></tr>
+<tr><td>必要檔案</td><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>./ci-toolkit file require NAME PATH [HINT]</code></td><td>無 stdout</td></tr>
+<tr><td>必要目錄</td><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>./ci-toolkit dir require NAME PATH [HINT]</code></td><td>無 stdout</td></tr>
+<tr><td>正則驗證</td><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>./ci-toolkit match require NAME VALUE REGEX [DESCRIPTION]</code></td><td>無 stdout</td></tr>
+<tr><td>unsigned int 驗證</td><td><code>ci::require_uint NAME VALUE</code></td><td><code>./ci-toolkit uint require NAME VALUE</code></td><td>無 stdout</td></tr>
+<tr><td>shell-escape argv</td><td><code>ci::shell_join ARG...</code></td><td><code>./ci-toolkit shell join ARG...</code></td><td>Bash-escaped command string</td></tr>
+<tr><td>ERR trap</td><td><code>ci::trap_err</code></td><td><code>./ci-toolkit trap-err</code></td><td>source 安裝 trap；CLI 回傳 <code>64</code> 並提示</td></tr>
+<tr><td>Slack webhook</td><td><code>ci::slack_webhook URL_VAR PROJECT STATUS MESSAGE</code></td><td><code>./ci-toolkit slack webhook URL_VAR PROJECT STATUS MESSAGE</code></td><td>無 stdout</td></tr>
+</tbody></table>
+<h3 id="argument-meanings">語法參考：參數意義</h3>
+<table><thead><tr><th>名稱</th><th>意義</th><th>範例</th></tr></thead><tbody>
+<tr><td><code>VAR_NAME</code></td><td>環境變數名稱，不是變數值。</td><td><code>DEPLOY_TOKEN</code></td></tr>
+<tr><td><code>NAME</code></td><td>失敗時可安全印出的邏輯名稱。</td><td><code>SSH_KEY</code>, <code>BUILD_DIR</code></td></tr>
+<tr><td><code>PATH</code></td><td>要驗證的檔案或目錄路徑；驗證失敗時不印出。</td><td><code>&quot;$DEPLOY_SSH_KEY&quot;</code></td></tr>
+<tr><td><code>HINT</code></td><td>可選修復提示。</td><td><code>&quot;mount deploy key&quot;</code></td></tr>
+<tr><td><code>REGEX</code></td><td>Bash extended regular expression。</td><td><code>&#x27;^[0-9]+$&#x27;</code></td></tr>
+<tr><td><code>DESCRIPTION</code></td><td>安全的規則描述，替代印出 raw value。</td><td><code>&quot;digits only&quot;</code></td></tr>
+<tr><td><code>ATTEMPTS</code></td><td>正整數 retry 次數；CLI retry 省略時預設 <code>3</code>。</td><td><code>5</code></td></tr>
+<tr><td><code>SECONDS</code></td><td>retry 失敗後的等待秒數。</td><td><code>30</code></td></tr>
+<tr><td><code>PREFIX</code></td><td>字面 prefix，不是 glob。</td><td><code>v</code></td></tr>
+<tr><td><code>CANDIDATE...</code></td><td>一個以上允許/排除的字面字串。</td><td><code>staging production</code></td></tr>
+<tr><td><code>URL_VAR</code></td><td>存 Slack webhook URL 的環境變數名稱。</td><td><code>SLACK_WEBHOOK_URL</code></td></tr>
+</tbody></table>
         </section>
 
         <!-- doc-key: discovery-read -->
         <section id="discovery-read">
-            <h2>探索與讀取</h2>
-            <p>在不進行任何更改的情況下探索工具包的功能：</p>
-            <ul>
-                <li><strong><code>ci::ls</code></strong>: 列出所有可用的函式及其描述。這是了解可用功能最快的方法。</li>
-                <li><strong><code>ci::is_true VAR</code></strong>: 對布林值變數進行穩健檢查。如果變數為 <code>1</code> 或 <code>true</code> 則回傳成功。</li>
-            </ul>
-
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">原始 Bash 對比：</p>
-                <pre><code># 原始 Bash (容易出錯)
-if [[ "${SKIP_TESTS:-}" == "true" ]]; then ...
-
-# Gungnir (穩健)
-if ci::is_true SKIP_TESTS; then ...</code></pre>
-            </div>
+<h2>探索與讀取</h2>
+<p>在更改腳本前、除錯中，或教 AI/code assistant 了解 toolkit 能力時，使用這些命令。</p>
+<h3 id="list-functions">列出可用函式</h3>
+<pre><code class="language-bash">./ci-toolkit ls</code></pre>
+<p><code>ls</code> 會印出所有 public <code>ci::</code> function 與其 <code># @description</code>。<code>ci::_...</code> private helper 會被隱藏。</p>
+<h3 id="cli-usage">查看 CLI usage</h3>
+<pre><code class="language-bash">./ci-toolkit help</code></pre>
+<p>當你記得 helper 但忘了 CLI 巢狀順序（例如 <code>file require</code> 還是 <code>require file</code>）時使用。</p>
+<h3 id="read-boolean-flags">讀取布林旗標</h3>
+<p><code>ci::is_true VAR</code> 只在變數值為 <code>1</code> 或 <code>true</code> 時回傳成功。</p>
+<pre><code class="language-bash">RUN_DEPLOY=${RUN_DEPLOY:-0}
+if ci::is_true RUN_DEPLOY; then
+  ci::info &quot;deploy checks enabled&quot;
+fi</code></pre>
+<p>這能避免腳本各處散落臨時比較。它刻意不把所有非空值都視為 true。</p>
+<h3 id="tag">讀取路徑與 tag</h3>
+<pre><code class="language-bash">repo_root=$(ci::root) || exit $?
+latest_release=$(ci::git_latest_tag v) || exit $?
+version=$(ci::strip_prefix v &quot;$latest_release&quot;)</code></pre>
+<p>回傳資料的 helper 用 command substitution 捕捉。因為 log 走 stderr，stdout 可以安全放進 <code>$(...)</code>。</p>
         </section>
 
         <!-- doc-key: writes-mutations -->
         <section id="writes-mutations">
-            <h2>寫入與變更</h2>
+<h2>寫入與變更</h2>
+<p>Gungnir 不會自行 deploy、build、publish 或修改你的專案。它包住你的 command，讓會造成變更的腳本更早失敗、重試 transient operation，並提供更清楚的 log。</p>
+<h3 id="robust-retries">穩健的重試機制</h3>
+<p><code>ci::retry</code> 最多執行 command <code>N</code> 次，成功就立刻回傳；若全部失敗，回傳最後一次 attempt 的 status。失敗 attempt 會把 warn log 寫到 stderr。</p>
+<pre><code class="language-bash"># Source 模式
+ci::retry 3 -- curl -fsS https://api.example.com/health
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 
-            <h3>穩健的重試機制</h3>
-            <p>Gungnir 的 <code>ci::retry</code> 比簡單的迴圈更強大。它會保留最後一次嘗試的退出狀態，並將失敗記錄到 stderr。</p>
-
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">範例：不穩定的網路呼叫</p>
-                <pre><code># 原始 Bash (冗長且容易寫錯)
-n=0; until [ "$n" -ge 3 ]; do
-  curl -fsS https://api.example.com && break
-  n=$((n+1)); sleep 1
-done
-
-# Gungnir
-ci::retry 3 curl -fsS https://api.example.com</code></pre>
-            </div>
-
-            <h3 class="mt-12">安全的環境檢查</h3>
-            <p><code>ci::require_env</code> 確保變數存在，且不會意外印出其內容（即使在某些環境中開啟了 <code>set -x</code> ）。</p>
+# CLI 模式
+./ci-toolkit retry 3 -- curl -fsS https://api.example.com/health
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<p>retry 適合可能 transient 的操作：registry download、<code>git fetch</code>、package install、health probe、<code>curl</code>、<code>rsync</code> 或 remote API。除非你有明確 flaky infrastructure 原因，否則不要 retry unit test、syntax check 或 build 這類 deterministic failure。</p>
+<h3 id="secure-env-checks">安全的環境檢查</h3>
+<p><code>ci::require_env NAME</code> 檢查名為 <code>NAME</code> 的環境變數是否存在且非空。它只印變數名稱，不印變數值。</p>
+<pre><code class="language-bash">ci::require_env REGISTRY_TOKEN || exit $?
+printf &#x27;%s&#x27; &quot;$REGISTRY_TOKEN&quot; | docker login ghcr.io --username ci --password-stdin</code></pre>
+<p>可選值請用 default：</p>
+<pre><code class="language-bash">ci::env_default REGISTRY_USER ci
+ci::env_default DEPLOY_REAL 0</code></pre>
+<h3 id="validation-helpers">必要檔案、目錄、格式與整數</h3>
+<p>用驗證 helper 命名邏輯欄位，並避免把實際值印到 log。</p>
+<pre><code class="language-bash">ci::require_file SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;create or mount the deploy key&quot; || exit $?
+ci::require_dir BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot; || exit $?
+ci::require_match DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27; || exit $?
+ci::require_uint RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot; || exit $?</code></pre>
+<p>CLI 對照：</p>
+<pre><code class="language-bash">./ci-toolkit file  require SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;create or mount the deploy key&quot;
+./ci-toolkit dir   require BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot;
+./ci-toolkit match require DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27;
+./ci-toolkit uint  require RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot;</code></pre>
+<h3 id="slack-webhook">Slack webhook 通知</h3>
+<p><code>ci::slack_webhook URL_VAR PROJECT STATUS MESSAGE</code> 會用 <code>URL_VAR</code> 指定的環境變數取得 Slack webhook URL 並送出簡短 JSON payload。它是 best-effort：URL 空白或缺 <code>curl</code> 時只 warn 並回傳成功，避免通知失敗中斷 deploy path。</p>
+<pre><code class="language-bash">ci::slack_webhook SLACK_WEBHOOK_URL &quot;my-service&quot; &quot;success&quot; &quot;release $IMAGE_TAG deployed&quot;</code></pre>
+<p>CLI 對照：</p>
+<pre><code class="language-bash">./ci-toolkit slack webhook SLACK_WEBHOOK_URL &quot;my-service&quot; &quot;success&quot; &quot;release $IMAGE_TAG deployed&quot;</code></pre>
         </section>
 
         <!-- doc-key: advanced-tools -->
         <section id="advanced-tools">
-            <h2>進階工具</h2>
-            <h3>路徑發現</h3>
-            <p>在 CI 中尋找儲存庫根目錄或特定的配置檔案通常很麻煩。</p>
-            <ul>
-                <li><strong><code>ci::find_up &lt;marker&gt;</code></strong>: 從當前目錄向上搜尋，直到找到名為 <code>&lt;marker&gt;</code> 的檔案或目錄。</li>
-                <li><strong><code>ci::root</code></strong>: <code>ci::find_up .git</code> 的快捷方式。</li>
-            </ul>
+<h2>進階工具</h2>
+<h3 id="helper">日誌與失敗 helper</h3>
+<pre><code class="language-bash">ci::info &quot;starting&quot;
+ci::warn &quot;optional cache unavailable&quot;
+ci::error &quot;preflight failed&quot;
+ci::debug &quot;resolved BUILD_DIR=$BUILD_DIR&quot;
+ci::die &quot;unsupported deploy target&quot; || exit 1</code></pre>
+<p><code>ci::debug</code> 只有在 <code>CI_TOOLKIT_DEBUG=1</code> 時輸出。<code>ci::die</code> 以 error level 記錄並回傳 <code>1</code>；它不會替你 <code>exit</code>。</p>
+<h3 id="path-discovery">路徑探索</h3>
+<pre><code class="language-bash">repo_root=$(ci::root) || exit $?
+config_root=$(ci::find_up package.json) || exit $?</code></pre>
+<p><code>ci::find_up &lt;marker&gt;</code> 從 <code>$PWD</code> 往上找名為 <code>&lt;marker&gt;</code> 的檔案或目錄，並印出匹配目錄。<code>ci::root</code> 等同 <code>ci::find_up .git</code>。</p>
+<h3 id="tag">版本比較與 tag 探索</h3>
+<pre><code class="language-bash">latest=$(ci::git_latest_tag v) || exit $?
+version=$(ci::strip_prefix v &quot;$latest&quot;)
 
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">原始 Bash 對比：</p>
-                <pre><code># 原始 Bash (深度固定，若腳本移動位置就會失效)
-REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
-
-# Gungnir (動態搜尋，從任何子目錄皆可運作)
-REPO_ROOT=$(ci::root)</code></pre>
-            </div>
-
-            <h3 class="mt-12">版本字串比較</h3>
-            <p>用於比較類 semver 字串（工具版本、git tag）時，無須再手刻容易出錯的字典序檢查 <code>[[ "$a" &gt; "$b" ]]</code>。底層使用 <code>sort -V</code>。</p>
-            <pre><code># Source 模式
-if ci::version_ge "$BUN_VERSION" "1.1.0"; then
-  ci::info "bun is new enough"
+if ci::version_ge &quot;$version&quot; &quot;1.2.0&quot;; then
+  ci::info &quot;release is new enough&quot;
 fi
 
-# CLI 模式
-./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
-./ci-toolkit version ge 1.2.3 1.2.3   # exits 0</code></pre>
-            <p>這兩個輔助函式可接受 <code>vX.Y.Z</code>、<code>X.Y.Z</code>、<code>X.Y</code> 以及簡單的 pre-release tag。build metadata（如 <code>1.0.0+build42</code>）會以字典序比較其尾段 — 對 CI 場景已夠用，但不等同於 SemVer 2.0 嚴格規範。</p>
-
-            <h3 class="mt-12">字串前綴移除</h3>
-            <p><code>${var#prefix}</code> 的小型包裝，CLI 模式同樣可用，且會將 glob 字元視為字面值。</p>
-            <pre><code># Source 模式
-TAG=$(ci::git_latest_tag v)
-VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
-
-# CLI 模式
-./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
-            <p>若前綴不存在，原字串會原封不動回傳。</p>
-
-            <h3 class="mt-12">字串述詞</h3>
-            <p>CI 條件判斷最常出現的需求 —「這個字串等於那個字串嗎？」、「這個值是否在允許清單裡？」— 都收斂到四個輕量的狀態碼輔助函式。它們以字面字串比對為基礎，不支援萬用字元、正則或大小寫忽略，且<strong>永遠不會印出比較的值</strong>，因此對可能含有敏感資訊的輸入也安全。</p>
-            <pre><code># Source 模式
-branch=$(git branch --show-current)
-if ci::eq "$branch" main; then
-  ci::info "running main-branch checks"
+if ci::version_gt &quot;1.2.4&quot; &quot;1.2.3&quot;; then
+  ci::info &quot;greater&quot;
+fi</code></pre>
+<p>CLI 對照：</p>
+<pre><code class="language-bash">./ci-toolkit git latest-tag v
+./ci-toolkit strip-prefix v v1.2.3
+./ci-toolkit version gt 1.2.4 1.2.3
+./ci-toolkit version ge 1.2.3 1.2.3</code></pre>
+<p>這些 helper 依賴 <code>sort -V</code>。它們適合 CI version gate 與 release tag，但不是完整 SemVer 2.0 實作。</p>
+<h3 id="predicate">字串 predicate</h3>
+<p>字串 predicate 只回傳 status，不印出被比較的值。</p>
+<pre><code class="language-bash">branch=$(git branch --show-current)
+if ci::eq &quot;$branch&quot; main; then
+  ci::info &quot;main branch checks&quot;
 fi
 
-target_env="${TARGET_ENV:-}"
-if ci::in "$target_env" staging production preview; then
-  ci::info "accepted deploy target: $target_env"
+if ci::in &quot;${TARGET_ENV:-}&quot; staging production preview; then
+  ci::info &quot;accepted target&quot;
 else
-  ci::die "unsupported deploy target: $target_env" || exit 1
-fi
-
-# CLI 模式
-./ci-toolkit eq "$TARGET_ENV" production
-./ci-toolkit in  "$TARGET_ENV" staging production preview
-./ci-toolkit not-in "$TARGET_ENV" dev experimental</code></pre>
-            <table>
-              <thead><tr><th>輔助函式</th><th>CLI</th><th>行為</th></tr></thead>
-              <tbody>
-                <tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td><code>ACTUAL == EXPECTED</code> 時離開碼 <code>0</code>。</td></tr>
-                <tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td><code>ACTUAL != EXPECTED</code> 時離開碼 <code>0</code>。</td></tr>
-                <tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td><code>VALUE</code> 與任一 <code>CANDIDATE</code> 字面相等時離開碼 <code>0</code>。</td></tr>
-                <tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td><code>VALUE</code> 與所有 <code>CANDIDATE</code> 都不相等時離開碼 <code>0</code>。</td></tr>
-              </tbody>
-            </table>
-            <p>少於 2 個參數視為使用方式錯誤，回傳 <code>64</code>，且不會印出任何值。</p>
-
-            <h3 class="mt-12">驗證輔助函式</h3>
-            <p>四個短小的驗證函式，把腳本裡重複的 guard 區塊收斂成具名契約。失敗時只報「邏輯欄位名稱」，<strong>不會印出 VALUE 或 PATH 的內容</strong>，因此可以安全用於敏感輸入。</p>
-            <pre><code># Source 模式
-ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
-ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
-ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
-ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
-
-# CLI 模式
-./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
-./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
-./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
-./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"</code></pre>
-            <table>
-              <thead><tr><th>輔助函式</th><th>CLI</th><th>行為</th></tr></thead>
-              <tbody>
-                <tr><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>file require</code></td><td><code>PATH</code> 不存在或不是檔案時離開碼 <code>1</code>。</td></tr>
-                <tr><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>dir require</code></td><td><code>PATH</code> 不存在或不是目錄時離開碼 <code>1</code>。</td></tr>
-                <tr><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>match require</code></td><td><code>VALUE</code> 不符 Bash 延伸正則 <code>REGEX</code> 時離開碼 <code>1</code>。</td></tr>
-                <tr><td><code>ci::require_uint NAME VALUE</code></td><td><code>uint require</code></td><td><code>VALUE</code> 不是 <code>^[0-9]+$</code> 時離開碼 <code>1</code>。</td></tr>
-              </tbody>
-            </table>
-            <p>使用方式錯誤一律回傳 <code>64</code>，並且<strong>不會</strong>將被拒絕的值寫入 stderr。</p>
-
-            <h3 class="mt-12">Shell 參數逃逸</h3>
-            <p><code>ci::shell_join</code>（CLI：<code>shell join</code>）把 argv 陣列展開成單一的 shell-escaped 字串，可被 Bash 重新解析。典型用途是把命令字串塞進 <code>rsync -e</code> 之類只接受字串、不接受 argv 陣列的旗標。</p>
-            <pre><code>source ./ci-toolkit
-
-SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
-RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
-rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"</code></pre>
-            <p>輸出使用 Bash 內建的 <code>printf '%q'</code>，所以逃逸結果是 Bash-specific，不保證在 POSIX sh 下可移植。本工具鏈目標就是 Bash 4+，這是有意為之的。<strong>不要</strong>將其結果交給未驗證資料的 <code>eval</code>。</p>
-
-            <h3 class="mt-12">預設 ERR 陷阱</h3>
-            <p><code>ci::trap_err</code> 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 <code>exit code</code>、<code>file:line</code>、函式名稱與失敗的 <code>BASH_COMMAND</code>。僅在 source 模式生效 — CLI 形式只是說明用途。</p>
-            <pre><code>source ./ci-toolkit
-ci::trap_err
-
-# 之後任何失敗的指令都會印出：
-# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."</code></pre>
-            <p>它會啟用 <code>set -E</code>（errtrace），讓 trap 可傳播進入函式內部，但不會動 <code>set -e/-u/pipefail</code> — 您原本的流程控制完全保留。第二次呼叫 <code>ci::trap_err</code> 會直接取代前一次（Bash <code>trap</code> 標準語意）。</p>
+  ci::die &quot;unsupported TARGET_ENV&quot; || exit 1
+fi</code></pre>
+<table><thead><tr><th>Helper</th><th>CLI</th><th>行為</th></tr></thead><tbody>
+<tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td><code>ACTUAL == EXPECTED</code> 時 exit <code>0</code>。</td></tr>
+<tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td><code>ACTUAL != EXPECTED</code> 時 exit <code>0</code>。</td></tr>
+<tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td><code>VALUE</code> 符合任一 candidate 時 exit <code>0</code>。</td></tr>
+<tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td><code>VALUE</code> 不符合任何 candidate 時 exit <code>0</code>。</td></tr>
+</tbody></table>
+<h3 id="shell">Shell 參數逃逸</h3>
+<p><code>ci::shell_join</code> 把 argv array 轉成一個 Bash-escaped command string。這適合 <code>rsync -e</code> 這種需要 command string 而非 argv 的工具。</p>
+<pre><code class="language-bash">SSH_OPTS=(-i &quot;$DEPLOY_SSH_KEY&quot; -p &quot;$DEPLOY_PORT&quot; -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh &quot;${SSH_OPTS[@]}&quot;)
+rsync -e &quot;$RSYNC_SSH&quot; &quot;$BUILD_DIR/&quot; &quot;$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/&quot;</code></pre>
+<p>輸出使用 Bash <code>printf &#x27;%q&#x27;</code>。不要把未信任資料透過 <code>eval</code> 重新執行。</p>
+<h3 id="err-trap">預設 ERR trap</h3>
+<pre><code class="language-bash">ci::trap_err</code></pre>
+<p><code>ci::trap_err</code> 安裝 <code>ERR</code> trap，失敗時報告 exit code、<code>file:line</code>、function name 與失敗的 <code>BASH_COMMAND</code>。它會啟用 <code>set -E</code> 讓 trap 傳進 function，但不會替你啟用 <code>set -e</code>、<code>set -u</code> 或 <code>pipefail</code>。</p>
         </section>
 
         <!-- doc-key: diagnostics-recovery -->
         <section id="diagnostics-recovery">
-            <h2>診斷與恢復</h2>
-            <p>Gungnir 幫助您構建具有「自我修復」能力或描述性的 CI 腳本。</p>
-            <ul>
-                <li><strong><code>ci::die "Message"</code></strong>: 記錄錯誤並回傳 <code>1</code>。在您的主腳本邏輯中搭配 <code>|| exit 1</code> 使用。</li>
-                <li><strong><code>ci::require_tool</code></strong>: 透過預先檢查依賴項，防止在執行到一半時才出現「command not found」錯誤。</li>
-            </ul>
+<h2>診斷與恢復</h2>
+<h3 id="exit-code">Exit code</h3>
+<table><thead><tr><th>Code</th><th>意義</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td>成功。</td></tr>
+<tr><td><code>1</code></td><td>runtime check 失敗、predicate 為 false、找不到 marker，或 retry 全部失敗。</td></tr>
+<tr><td><code>64</code></td><td>使用方式錯誤：未知 command、缺少必要參數、retry count 無效、regex 無效，或像 CLI 執行 <code>trap-err</code> 這類 source/CLI 模式不匹配。</td></tr>
+</tbody></table>
+<h3 id="troubleshooting">疑難排解</h3>
+<table><thead><tr><th>症狀</th><th>可能原因</th><th>修復</th></tr></thead><tbody>
+<tr><td>macOS 出現 <code>bad array subscript</code> 或奇怪 Bash 行為</td><td>腳本跑在 Bash 3.2。</td><td>使用 <code>#!/usr/bin/env bash</code> 並安裝 Bash 4+（<code>brew install bash</code>）。</td></tr>
+<tr><td>version/tag helper 抱怨 <code>sort -V</code></td><td>你的 <code>sort</code> 不支援 version sort。</td><td>安裝 GNU coreutils，或確保相容 <code>sort</code> 在 <code>PATH</code> 上。</td></tr>
+<tr><td>log 中看不到某個值</td><td>通常是刻意設計。</td><td>validation helper 避免印值以防 secret leakage；需要時請自己印安全摘要。</td></tr>
+<tr><td><code>ci::debug</code> 沒輸出</td><td>debug logging 未啟用。</td><td>用 <code>CI_TOOLKIT_DEBUG=1</code> 執行。</td></tr>
+<tr><td><code>ci::root</code> 失敗</td><td><code>$PWD</code> 往上沒有 <code>.git</code> 目錄。</td><td>從 checkout 內執行，或用 <code>ci::find_up &lt;project-marker&gt;</code>。</td></tr>
+<tr><td>CLI command exit <code>64</code></td><td>參數不符合 <code>./ci-toolkit help</code>。</td><td>重新看 <code>help</code>，檢查巢狀 command 順序。</td></tr>
+</tbody></table>
+<h3 id="safe-debugging-pattern">安全除錯模式</h3>
+<pre><code class="language-bash">CI_TOOLKIT_DEBUG=1 ./your-script.sh</code></pre>
+<p>Source 模式中，把 <code>ci::trap_err</code> 與明確 preflight check 放在 <code>main()</code> 前段，讓失敗指向真正出錯的 command。</p>
         </section>
 
         <!-- doc-key: ai-integration -->
         <section id="ai-integration">
-            <h2>AI 代理整合</h2>
-            <p>Gungnir 是為 AI 優先開發而構建的。它附帶了一個 <strong>Claude Code 技能</strong> (<code>skills/ci-toolkit/</code>) ，可幫助 LLM 識別何時使用該工具包。</p>
-            <p>與 AI 代理協作時：</p>
-            <ul>
-                <li>引導代理閱讀 <code>AGENTS.md</code> 以了解儲存庫特定的慣例。</li>
-                <li>鼓勵代理使用 <code>ci::require_env</code> 和 <code>ci::require_tool</code> 來防止腳本變得脆弱。</li>
-                <li>對於代理生成的任何依賴網路的呼叫，請使用 <code>ci::retry</code>。</li>
-            </ul>
+<h2>AI 代理整合</h2>
+<p>Gungnir 對 AI 產生 CI/deploy 腳本很有幫助，因為它給 agent 一組小而穩定的 vocabulary，而不是讓 agent 每次都發明自製 Bash helper。</p>
+<h3 id="agent-prompt">建議給 agent 的 prompt</h3>
+<pre><code class="language-text">Use ./ci-toolkit for CI primitives. Source it in Bash scripts and prefer ci::info,
+ci::warn, ci::die, ci::require_env, ci::require_tool, ci::retry, ci::find_up,
+ci::root, validation helpers, and ci::shell_join instead of writing custom helpers.
+Keep project-specific build/deploy policy in the script.</code></pre>
+<h3 id="agent">請 agent 保留的規則</h3>
+<ul>
+<li>依腳本位置 source <code>ci-toolkit</code>。</li>
+<li>保持 <code>main()</code> entry point 與小型 <code>run_*</code> functions。</li>
+<li>對 secrets 使用 <code>ci::require_env</code>，不要 echo 值。</li>
+<li><code>ci::retry</code> 只包 transient network 或 remote operation。</li>
+<li>log 留在 stderr，data helper 從 stdout 捕捉。</li>
+<li>不要把 CI vendor-specific 假設放進 reusable helper。</li>
+</ul>
+<h3 id="agent-friendly-deployment-preflight">範例：agent-friendly deployment preflight</h3>
+<pre><code class="language-bash">preflight() {
+  ci::require_tool git || exit $?
+  ci::require_tool rsync || exit $?
+  ci::require_env DEPLOY_HOST || exit $?
+  ci::require_env DEPLOY_USER || exit $?
+  ci::require_file SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;mount deploy key&quot; || exit $?
+}</code></pre>
+<p>此 repo 也包含給 Claude Code 使用的 <code>skills/ci-toolkit/</code>。執行 <code>scripts/install-skill</code> 可 symlink 到本機 Claude skills 目錄。</p>
         </section>
 
         <!-- doc-key: documentation-maintenance -->
         <section id="documentation-maintenance">
-            <h2>文件維護</h2>
-            <p>Gungnir 使用 Markdown 和 HTML 雙重格式維護文件。每個主題都由 <code><!-- doc-key: id --></code> 註釋錨定。</p>
-            <p>跨語系和格式的一致性通過以下方式驗證：</p>
-            <pre><code>bun run scripts/check-user-docs.ts</code></pre>
-            <p>This ensures that the reference (<code>index.md</code>) and the visual surface (<code>index.html</code>) always present the same features in the same order.</p>
+<h2>文件維護</h2>
+<p>使用者文件每個語系都有 Markdown 與 HTML：</p>
+<pre><code class="language-text">docs/user/en/index.md
+docs/user/en/index.html
+docs/user/zh-TW/index.md
+docs/user/zh-TW/index.html</code></pre>
+<p>每個主要主題都由 doc-key marker comment 錨定。每個語系內 Markdown 與 HTML 的 doc-key 順序必須一致，讓 reference 與 visual surface 保持同步。</p>
+<p>修改後執行文件一致性檢查：</p>
+<pre><code class="language-bash">bun run scripts/check-user-docs.ts</code></pre>
+<p>更完整的 repository 驗證：</p>
+<pre><code class="language-bash">./scripts/test
+./scripts/lint
+./scripts/smoke</code></pre>
+<p>新增 public helper 時，請依序更新：</p>
+<ol class="list-decimal pl-6 mb-8 space-y-3 text-text-muted">
+<li class="block">在 public <code>ci::</code> function 上方新增或更新 <code># @description</code>。</li>
+<li class="block">更新 <code>./ci-toolkit help</code> usage 與 CLI examples。</li>
+<li class="block">新增 source-mode 與 CLI-mode tests。</li>
+<li class="block">更新 <code>README.md</code>、<code>CHANGELOG.md</code> 與 user docs。</li>
+<li class="block">執行 doc parity check 與上述 quality gates。</li>
+</ol>
         </section>
-
-        <footer class="mt-32 pb-20 text-center">
-            <div class="h-px w-24 bg-border mx-auto mb-8"></div>
-            <p class="text-text-muted text-sm font-medium">Gungnir 使用手冊</p>
-        </footer>
+        <footer class="mt-32 pb-20 text-center"><div class="h-px w-24 bg-border mx-auto mb-8"></div><p class="text-text-muted text-sm font-medium">Gungnir 使用手冊</p></footer>
     </main>
 
     <script>
@@ -364,9 +551,7 @@ ci::trap_err
                     const id = entry.target.getAttribute('id');
                     document.querySelectorAll('.nav-item a').forEach(link => {
                         link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${id}`) {
-                            link.classList.add('active');
-                        }
+                        if (link.getAttribute('href') === `#${id}`) link.classList.add('active');
                     });
                 }
             });

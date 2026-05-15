@@ -22,18 +22,14 @@
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
         }
         @layer base {
-            html {
-                scroll-behavior: smooth;
-            }
-            body {
-                @apply bg-background text-text-main antialiased selection:bg-primary/10;
-                font-family: var(--font-sans);
-            }
-            h1, h2, h3 { font-family: var(--font-display); }
+            html { scroll-behavior: smooth; }
+            body { @apply bg-background text-text-main antialiased selection:bg-primary/10; font-family: var(--font-sans); }
+            h1, h2, h3, h4 { font-family: var(--font-display); }
             h1 { @apply text-5xl font-black tracking-tight mt-16 mb-8 text-text-main; }
             h2 { @apply text-3xl font-bold tracking-tight mt-16 mb-8 flex items-center gap-3 text-text-main; }
             h2::after { content: ""; @apply h-px flex-1 bg-border ml-4; }
             h3 { @apply text-xl font-bold mt-12 mb-6 text-text-main; }
+            h4 { @apply text-lg font-bold mt-8 mb-4 text-text-main; }
             p { @apply mb-6 leading-relaxed text-text-muted text-[1.05rem]; }
             ul { @apply list-none mb-8 space-y-3; }
             li { @apply flex items-start gap-3 text-text-muted; }
@@ -43,35 +39,22 @@
             pre code { @apply bg-transparent p-0 text-[#EDE8E4] text-[0.9rem] leading-relaxed border-none; }
             table { @apply w-full border-collapse mb-10 text-sm text-left rounded-lg overflow-hidden border border-border bg-surface shadow-sm; }
             th { @apply bg-background/50 px-6 py-4 font-bold text-text-main border-b border-border; }
-            td { @apply px-6 py-4 border-b border-border text-text-muted; }
+            td { @apply px-6 py-4 border-b border-border text-text-muted align-top; }
             tr:last-child td { @apply border-none; }
             tr:hover td { @apply bg-background/30 transition-colors; }
         }
-        .paper-card {
-            @apply bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300;
-        }
-        .nav-link {
-            @apply block py-2 px-4 rounded-md text-text-muted hover:text-primary transition-colors font-medium;
-        }
-        .nav-link.active {
-            @apply text-primary font-bold border-l-2 border-primary bg-primary/5 rounded-none;
-        }
+        .paper-card { @apply bg-surface border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300; }
+        .nav-link { @apply block py-2 px-4 rounded-md text-text-muted hover:text-primary transition-colors font-medium; }
+        .nav-link.active { @apply text-primary font-bold border-l-2 border-primary bg-primary/5 rounded-none; }
     </style>
 </head>
 <body class="flex min-h-screen">
-
-    <!-- Sidebar -->
     <nav class="hidden lg:block w-80 h-screen sticky top-0 self-start bg-surface border-r border-border p-8 overflow-y-auto shrink-0 transition-all z-50">
         <div class="flex items-center gap-3 mb-12">
-            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <span class="text-white font-black text-xl">G</span>
-            </div>
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm"><span class="text-white font-black text-xl">G</span></div>
             <span class="text-2xl font-black tracking-tight text-text-main">Gungnir</span>
         </div>
-
-        <div class="space-y-8">
-            <section>
-                <ul class="list-none space-y-1 p-0 m-0">
+        <div class="space-y-8"><section><ul class="list-none space-y-1 p-0 m-0">
                     <li class="nav-item"><a href="#overview" class="nav-link">Overview</a></li>
                     <li class="nav-item"><a href="#install-setup" class="nav-link">Install & setup</a></li>
                     <li class="nav-item"><a href="#connections" class="nav-link">Connections</a></li>
@@ -81,279 +64,483 @@
                     <li class="nav-item"><a href="#diagnostics-recovery" class="nav-link">Diagnostics / recovery</a></li>
                     <li class="nav-item"><a href="#ai-integration" class="nav-link">AI integration</a></li>
                     <li class="nav-item"><a href="#documentation-maintenance" class="nav-link">Documentation maintenance</a></li>
-                </ul>
-            </section>
-        </div>
+        </ul></section></div>
     </nav>
 
-    <!-- Main Content -->
     <main class="flex-1 p-6 lg:p-16 max-w-5xl mx-auto">
         <!-- doc-key: overview -->
         <section id="overview" class="py-12">
-            <h1>Gungnir</h1>
-            <p class="text-xl font-medium text-text-muted max-w-3xl leading-relaxed">
-                Experimental, platform-neutral Bash helpers for CI scripts
-            </p>
-            <p>
-                Gungnir is an experimental, platform-neutral Bash toolkit designed to simplify CI/CD scripts. It provides a single-file artifact that functions as both a CLI tool and a sourceable Bash library, consolidating common patterns like structured logging, environment validation, and robust command retries.
-            </p>
-            <div class="flex gap-4 mt-8">
-                <a href="https://github.com/CMG/Gungnir" class="px-6 py-3 bg-surface border border-border rounded-md font-bold text-text-main hover:bg-background transition-all">GitHub</a>
-            </div>
+<h1>Gungnir</h1>
+<p>Experimental, platform-neutral Bash helpers for CI scripts.</p>
+<p>Gungnir ships one file, <code>ci-toolkit</code>. You can execute it as a CLI or <code>source</code> it as a Bash library that exposes <code>ci::</code> functions. It is intentionally small: it handles reusable CI primitives such as logging, environment checks, retries, path discovery, version comparisons, validation, shell argument escaping, and simple notifications. It does <strong>not</strong> encode GitHub Actions, GitLab, CircleCI, Docker, build, or deploy policy.</p>
+<p>Use Gungnir when your CI scripts have started accumulating hand-written helpers such as <code>log()</code>, <code>fatal()</code>, <code>retry()</code>, <code>require_env()</code>, or &quot;find repo root&quot; snippets. Keep project-specific decisions in your own scripts; delegate the boring, error-prone primitives to the toolkit.</p>
+<h2>What you get</h2>
+<ul>
+<li><strong>One artifact</strong>: download <code>ci-toolkit</code>, mark it executable, and commit or cache it like any other script.</li>
+<li><strong>Two modes</strong>: CLI mode for one-liners, source mode for full scripts.</li>
+<li><strong>Safe output contracts</strong>: logs go to stderr; data goes to stdout; validation failures name the failing field but never print secret values.</li>
+<li><strong>Predictable failures</strong>: source functions return statuses instead of exiting; CLI usage errors return <code>64</code>.</li>
+<li><strong>Bash 4+ only</strong>: no build step, no package manager, no runtime service.</li>
+</ul>
         </section>
 
         <!-- doc-key: install-setup -->
         <section id="install-setup">
-            <h2>Install &amp; setup</h2>
-            <p>Install the <code>ci-toolkit</code> artifact directly in your CI environment using <code>curl</code> and <code>chmod</code>. We recommend pinning to a specific release tag for stability:</p>
-            <pre><code>curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit -o ci-toolkit
+<h2>Install &amp; setup</h2>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>Bash 4+. On older macOS machines, <code>/bin/bash</code> is 3.2; install a newer Bash with <code>brew install bash</code> and run scripts through <code>#!/usr/bin/env bash</code>.</li>
+<li>Standard shell tools available on <code>PATH</code>.</li>
+<li>A <code>sort</code> implementation with <code>-V</code> support if you use <code>ci::version_gt</code>, <code>ci::version_ge</code>, or <code>ci::git_latest_tag</code>. The toolkit probes this and prints a remediation hint if it is missing.</li>
+<li>Optional: <code>shellcheck</code> if you want local linting via <code>./scripts/lint</code>.</li>
+</ul>
+<h3 id="install-a-pinned-release">Install a pinned release</h3>
+<p>Pin a release tag in CI. Do not curl <code>main</code> from production automation unless you deliberately want experimental changes.</p>
+<pre><code class="language-bash">curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version</code></pre>
-            <p>For local development or as an AI skill, you can use the provided <code>scripts/install-skill</code> to symlink the toolkit into your Claude Code skills directory.</p>
+<p>Expected output:</p>
+<pre><code class="language-text">ci-toolkit 0.1.10</code></pre>
+<h3 id="vendor-it-next-to-your-script">Vendor it next to your script</h3>
+<p>For scripts that need to run on a CI host, deployment host, or developer laptop, the lowest-surprise pattern is to vendor a pinned copy next to the script that uses it.</p>
+<pre><code class="language-bash">mkdir -p infra/ci
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.10/ci-toolkit \
+  -o infra/ci/ci-toolkit
+chmod +x infra/ci/ci-toolkit
+git add infra/ci/ci-toolkit
+git commit -m &quot;Vendor Gungnir ci-toolkit v0.1.10&quot;</code></pre>
+<p>Then load it with a path relative to the script, not the caller&#x27;s current directory:</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
 
-            <h3>Comparison: Why use Gungnir?</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Raw Bash</th>
-                        <th>Gungnir <code>ci-toolkit</code></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Logging</strong></td>
-                        <td><code>echo "[INFO] starting"</code></td>
-                        <td><code>ci::info "starting"</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Env Check</strong></td>
-                        <td><code>if [[ -z "$TOKEN" ]]; then ...</code></td>
-                        <td><code>ci::require_env TOKEN</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Retry</strong></td>
-                        <td><code>for i in {1..3}; do ...</code></td>
-                        <td><code>ci::retry 3 cmd</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Path Fix</strong></td>
-                        <td><code>$(cd "$(dirname "$0")"/.. && pwd)</code></td>
-                        <td><code>ci::root</code></td>
-                    </tr>
-                </tbody>
-            </table>
+readonly SCRIPT_DIR=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)
+# shellcheck source=./ci-toolkit
+source &quot;$SCRIPT_DIR/ci-toolkit&quot;</code></pre>
+<h3 id="cli-quick-check">CLI quick check</h3>
+<pre><code class="language-bash">./ci-toolkit help
+./ci-toolkit ls
+./ci-toolkit log info &quot;toolkit is installed&quot;
+./ci-toolkit env require HOME
+./ci-toolkit tool require git</code></pre>
+<h3 id="raw-bash-vs-gungnir">Raw Bash vs Gungnir</h3>
+<table><thead><tr><th>Task</th><th>Raw Bash</th><th>Gungnir <code>ci-toolkit</code></th></tr></thead><tbody>
+<tr><td><strong>Logging</strong></td><td><code>echo &quot;[INFO] starting&quot; &gt;&amp;2</code></td><td><code>ci::info &quot;starting&quot;</code></td></tr>
+<tr><td><strong>Env check</strong></td><td><code>if [[ -z &quot;${TOKEN:-}&quot; ]]; then echo ...; exit 1; fi</code></td><td><code>ci::require_env TOKEN</code></td></tr>
+<tr><td><strong>Tool check</strong></td><td>manual <code>command -v</code> check plus exit handling</td><td><code>ci::require_tool git</code></td></tr>
+<tr><td><strong>Retry</strong></td><td>custom loop with counters, sleeps, and status preservation</td><td><code>ci::retry 3 -- curl -fsS &quot;$URL&quot;</code></td></tr>
+<tr><td><strong>Path discovery</strong></td><td>fixed-depth <code>cd &quot;$(dirname &quot;$0&quot;)/..&quot;</code> snippets</td><td><code>ci::root</code> or <code>ci::find_up marker</code></td></tr>
+<tr><td><strong>String allow-list</strong></td><td><code>case &quot;$env&quot; in prod|staging) ...</code></td><td><code>ci::in &quot;$env&quot; prod staging</code></td></tr>
+</tbody></table>
+<h3 id="before-after-raw-bash-syntax-vs-ci-syntax">Before / after: raw Bash syntax vs <code>ci::</code> syntax</h3>
+<p>The advantage of Gungnir is not that Bash cannot do these things. The advantage is that the safe version of raw Bash is repetitive and easy to get subtly wrong. The <code>ci::</code> syntax names the intent directly.</p>
+<h4 id="logging">Logging</h4>
+<p>Raw Bash often mixes stdout and stderr, or uses inconsistent prefixes:</p>
+<pre><code class="language-bash">echo &quot;starting deploy&quot;
+echo &quot;warning: cache missing&quot; &gt;&amp;2
+echo &quot;error: deploy failed&quot; &gt;&amp;2</code></pre>
+<p>With <code>ci::</code>, logs are consistently structured and always go to stderr:</p>
+<pre><code class="language-bash">ci::info &quot;starting deploy&quot;
+ci::warn &quot;cache missing&quot;
+ci::error &quot;deploy failed&quot;</code></pre>
+<h4 id="required-environment-variables">Required environment variables</h4>
+<p>Raw Bash checks are verbose, and it is easy to accidentally print a secret while debugging:</p>
+<pre><code class="language-bash">if [[ -z &quot;${DEPLOY_TOKEN:-}&quot; ]]; then
+  echo &quot;DEPLOY_TOKEN is required&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>With <code>ci::</code>, the helper checks the variable by name and never prints its value:</p>
+<pre><code class="language-bash">ci::require_env DEPLOY_TOKEN || exit $?</code></pre>
+<h4 id="required-tools">Required tools</h4>
+<p>Raw Bash repeats <code>command -v</code> plumbing in every script:</p>
+<pre><code class="language-bash">if ! command -v git &gt;/dev/null 2&gt;&amp;1; then
+  echo &quot;git is required&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>With <code>ci::</code>, the syntax describes the precondition:</p>
+<pre><code class="language-bash">ci::require_tool git || exit $?</code></pre>
+<h4 id="retry-a-flaky-command">Retry a flaky command</h4>
+<p>A correct raw retry loop must preserve the final exit status, count attempts correctly, and avoid hiding deterministic failures:</p>
+<pre><code class="language-bash">attempt=1
+max_attempts=3
+status=0
+while (( attempt &lt;= max_attempts )); do
+  curl -fsS &quot;$HEALTH_URL&quot; &amp;&amp; status=0 &amp;&amp; break
+  status=$?
+  echo &quot;attempt $attempt failed&quot; &gt;&amp;2
+  attempt=$((attempt + 1))
+done
+exit &quot;$status&quot;</code></pre>
+<p>With <code>ci::</code>, retry policy is one line and the wrapped command remains visible:</p>
+<pre><code class="language-bash">ci::retry 3 -- curl -fsS &quot;$HEALTH_URL&quot;</code></pre>
+<p>Add delay without rewriting the loop:</p>
+<pre><code class="language-bash">ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<h4 id="find-the-repository-root">Find the repository root</h4>
+<p>Raw Bash often assumes a fixed directory depth, which breaks when the script moves:</p>
+<pre><code class="language-bash">REPO_ROOT=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)/../..&quot; &amp;&amp; pwd)</code></pre>
+<p>With <code>ci::</code>, discover the root from the current working directory:</p>
+<pre><code class="language-bash">REPO_ROOT=$(ci::root) || exit $?</code></pre>
+<h4 id="validate-values-without-leaking-them">Validate values without leaking them</h4>
+<p>Raw Bash validation commonly prints the rejected value or path:</p>
+<pre><code class="language-bash">if [[ ! &quot;$DEPLOY_USER&quot; =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo &quot;invalid deploy user: $DEPLOY_USER&quot; &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>With <code>ci::</code>, stderr names the logical field and rule, not the sensitive value:</p>
+<pre><code class="language-bash">ci::require_match DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27; || exit $?</code></pre>
+<h4 id="allow-list-checks">Allow-list checks</h4>
+<p>Raw Bash <code>case</code> is fine, but it expands quickly as conditions get repeated:</p>
+<pre><code class="language-bash">case &quot;${TARGET_ENV:-}&quot; in
+  staging|production|preview) ;;
+  *)
+    echo &quot;unsupported TARGET_ENV&quot; &gt;&amp;2
+    exit 1
+    ;;
+esac</code></pre>
+<p>With <code>ci::</code>, the allowed values are the arguments:</p>
+<pre><code class="language-bash">if ! ci::in &quot;${TARGET_ENV:-}&quot; staging production preview; then
+  ci::die &quot;unsupported TARGET_ENV&quot; || exit 1
+fi</code></pre>
         </section>
 
         <!-- doc-key: connections -->
         <section id="connections">
-            <h2>Connections / initialisation</h2>
-            <p>Gungnir requires <strong>Bash 4+</strong>. It is designed to be platform-neutral, making no assumptions about specific CI vendors (like GitHub Actions or GitLab).</p>
-            
-            <h3>Source Mode vs CLI Mode</h3>
-            <ul>
-                <li><strong>Source Mode (Recommended for scripts)</strong>: <code>source ./ci-toolkit</code> allows you to use <code>ci::</code> functions. These functions return status codes and do <strong>not</strong> call <code>exit</code>, giving you full control over your script's flow.</li>
-                <li><strong>CLI Mode</strong>: Run <code>./ci-toolkit</code> directly. Commands will <code>exit</code> with non-zero codes on failure, which is ideal for one-liners in <code>workflow.yml</code> or <code>Makefile</code>.</li>
-            </ul>
+<h2>Connections / initialisation</h2>
+<p>Gungnir has no server-side connection setup. &quot;Connection&quot; means how your script connects to the toolkit: execute it as a CLI, or source it into the current Bash process.</p>
+<h3 id="choose-the-right-mode">Choose the right mode</h3>
+<table><thead><tr><th>Mode</th><th>Use when</th><th>Behavior</th></tr></thead><tbody>
+<tr><td><strong>Source mode</strong></td><td>You are writing a script with functions, branches, cleanup, or multiple steps.</td><td><code>source ./ci-toolkit</code>, then call <code>ci::...</code>. Helpers return status codes and do not terminate your shell.</td></tr>
+<tr><td><strong>CLI mode</strong></td><td>You need a one-liner in a Makefile, CI YAML step, or shell pipeline.</td><td>Run <code>./ci-toolkit ...</code>. Commands use process exit codes and print usage errors to stderr.</td></tr>
+</tbody></table>
+<h3 id="source-mode-skeleton">Source mode skeleton</h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
 
-            <h3>Environment Variables</h3>
-            <ul>
-                <li><strong><code>CI_TOOLKIT_DEBUG=1</code></strong>: Enables verbose debug logging to stderr.</li>
-                <li><strong><code>ci::env_default VAR VALUE</code></strong>: Safely sets a fallback value if a variable is unset.</li>
-            </ul>
+readonly SCRIPT_DIR=$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)
+source &quot;$SCRIPT_DIR/ci-toolkit&quot;
+
+main() {
+  ci::trap_err
+  ci::info &quot;starting checks&quot;
+
+  ci::require_tool git || exit $?
+  ci::require_env DEPLOY_TOKEN || exit $?
+
+  ci::retry 3 -- git fetch origin --quiet
+  ci::info &quot;done&quot;
+}
+
+main &quot;$@&quot;</code></pre>
+<h3 id="cli-mode-examples">CLI mode examples</h3>
+<pre><code class="language-bash">./ci-toolkit log info &quot;starting checks&quot;
+./ci-toolkit env require DEPLOY_TOKEN
+./ci-toolkit tool require git
+./ci-toolkit retry 5 -- curl -fsS https://example.com/health
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<h3 id="output-and-exit-code-contract">Output and exit-code contract</h3>
+<table><thead><tr><th>Contract</th><th>Details</th></tr></thead><tbody>
+<tr><td>Logs</td><td><code>ci::log</code>, <code>ci::info</code>, <code>ci::warn</code>, <code>ci::error</code>, and <code>ci::debug</code> write to <strong>stderr</strong>.</td></tr>
+<tr><td>Data</td><td>Helpers that return a value, such as <code>ci::root</code>, <code>ci::find_up</code>, <code>ci::strip_prefix</code>, and <code>ci::shell_join</code>, write to <strong>stdout</strong>.</td></tr>
+<tr><td>Source failures</td><td>Source functions return a status. Add explicit exit handling when a failed guard should stop the script.</td></tr>
+<tr><td>CLI usage errors</td><td>Malformed CLI invocations return <code>64</code> and print usage to stderr.</td></tr>
+<tr><td>Secret safety</td><td><code>require_env</code>, <code>require_file</code>, <code>require_dir</code>, <code>require_match</code>, and <code>require_uint</code> report names/rules, not sensitive values.</td></tr>
+</tbody></table>
+<h3 id="environment-variables">Environment variables</h3>
+<table><thead><tr><th>Variable</th><th>Effect</th></tr></thead><tbody>
+<tr><td><code>CI_TOOLKIT_DEBUG=1</code></td><td>Enables <code>ci::debug</code> / <code>log debug</code> output. Debug logs are silent by default.</td></tr>
+</tbody></table>
+<p><code>ci::env_default VAR VALUE</code> is a helper, not a configuration variable. In source mode it sets <code>VAR</code> in the current shell if <code>VAR</code> is unset or empty.</p>
+<h3 id="syntax-reference-cli-grammar">Syntax reference: CLI grammar</h3>
+<p>Most CLI commands follow this shape:</p>
+<pre><code class="language-text">./ci-toolkit &lt;command&gt; [subcommand] [arguments...]</code></pre>
+<p>Commands that run another command use <code>--</code> to mark where toolkit options end and your command begins:</p>
+<pre><code class="language-bash">./ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]</code></pre>
+<p>Examples:</p>
+<pre><code class="language-bash">./ci-toolkit retry -- make test                  # default 3 attempts
+./ci-toolkit retry 5 -- curl -fsS &quot;$HEALTH_URL&quot;  # explicit attempts
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev</code></pre>
+<p>Nested CLI commands put the noun first, then the action:</p>
+<pre><code class="language-bash">./ci-toolkit env require DEPLOY_TOKEN
+./ci-toolkit env default DEPLOY_ENV staging
+./ci-toolkit tool require git
+./ci-toolkit file require SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;mount the key first&quot;
+./ci-toolkit dir require BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot;
+./ci-toolkit match require DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27;
+./ci-toolkit uint require RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot;
+./ci-toolkit shell join ssh -i &quot;$DEPLOY_SSH_KEY&quot; -p 22
+./ci-toolkit git latest-tag v
+./ci-toolkit slack webhook SLACK_WEBHOOK_URL my-service success &quot;deploy complete&quot;</code></pre>
+<h3 id="syntax-reference-source-mode-rules">Syntax reference: source-mode rules</h3>
+<p>Source-mode helpers are normal Bash functions. They do not exit your script; they return a status. Use them in <code>if</code>, <code>||</code>, command substitution, or assignments depending on what the helper returns.</p>
+<pre><code class="language-bash">source ./ci-toolkit
+
+ci::require_env DEPLOY_TOKEN || exit $?          # guard helper
+ci::retry 3 -- git fetch origin --quiet          # command wrapper
+if ci::in &quot;${TARGET_ENV:-}&quot; staging production; then ...; fi  # predicate
+repo_root=$(ci::root) || exit $?                 # data helper</code></pre>
+<p>Use these patterns consistently:</p>
+<pre><code class="language-bash"># Required preconditions: stop when a guard fails.
+ci::require_tool git || exit $?
+ci::require_env DEPLOY_TOKEN || exit $?
+
+# Predicates and optional branches: use helpers directly in if statements.
+if ci::is_true RUN_DEPLOY; then
+  run_deploy
+fi
+
+# Data helpers: capture stdout, then handle failure.
+repo_root=$(ci::root) || exit $?
+latest_tag=$(ci::git_latest_tag v) || exit $?
+
+# Project-specific context: combine predicates with your own error message.
+ci::version_gt &quot;$new&quot; &quot;$old&quot; || ci::die &quot;tag is not newer&quot; || exit 1</code></pre>
+<h3 id="syntax-reference-source-and-cli-equivalents">Syntax reference: source and CLI equivalents</h3>
+<table><thead><tr><th>Purpose</th><th>Source syntax</th><th>CLI syntax</th><th>Success output</th></tr></thead><tbody>
+<tr><td>Print help</td><td>n/a</td><td><code>./ci-toolkit help</code></td><td>Usage text on stdout</td></tr>
+<tr><td>Print version</td><td>n/a</td><td><code>./ci-toolkit version</code></td><td><code>ci-toolkit X.Y.Z</code></td></tr>
+<tr><td>List functions</td><td><code>ci::ls</code></td><td><code>./ci-toolkit ls</code></td><td>Function list on stdout</td></tr>
+<tr><td>Info log</td><td><code>ci::info MESSAGE...</code></td><td><code>./ci-toolkit log info MESSAGE</code></td><td>Log line on stderr</td></tr>
+<tr><td>Warn log</td><td><code>ci::warn MESSAGE...</code></td><td><code>./ci-toolkit log warn MESSAGE</code></td><td>Log line on stderr</td></tr>
+<tr><td>Error log</td><td><code>ci::error MESSAGE...</code></td><td><code>./ci-toolkit log error MESSAGE</code></td><td>Log line on stderr</td></tr>
+<tr><td>Debug log</td><td><code>ci::debug MESSAGE...</code></td><td><code>./ci-toolkit log debug MESSAGE</code></td><td>Stderr only when <code>CI_TOOLKIT_DEBUG=1</code></td></tr>
+<tr><td>Die helper</td><td><code>ci::die MESSAGE...</code></td><td>n/a</td><td>Error log; returns <code>1</code></td></tr>
+<tr><td>Require env var</td><td><code>ci::require_env VAR_NAME</code></td><td><code>./ci-toolkit env require VAR_NAME</code></td><td>No stdout</td></tr>
+<tr><td>Default env var</td><td><code>ci::env_default VAR_NAME DEFAULT</code></td><td><code>./ci-toolkit env default VAR_NAME DEFAULT</code></td><td>Effective value on stdout</td></tr>
+<tr><td>Require tool</td><td><code>ci::require_tool TOOL_NAME</code></td><td><code>./ci-toolkit tool require TOOL_NAME</code></td><td>No stdout</td></tr>
+<tr><td>Retry command</td><td><code>ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND...</code></td><td><code>./ci-toolkit retry [ATTEMPTS] [--delay SECONDS] -- COMMAND...</code></td><td>Wrapped command output</td></tr>
+<tr><td>Find marker upward</td><td><code>ci::find_up MARKER</code></td><td>n/a</td><td>Matching directory on stdout</td></tr>
+<tr><td>Find git root</td><td><code>ci::root</code></td><td>n/a</td><td>Git root on stdout</td></tr>
+<tr><td>Latest tag</td><td><code>ci::git_latest_tag [PREFIX]</code></td><td><code>./ci-toolkit git latest-tag [PREFIX]</code></td><td>Tag on stdout</td></tr>
+<tr><td>Strip prefix</td><td><code>ci::strip_prefix PREFIX STRING</code></td><td><code>./ci-toolkit strip-prefix PREFIX STRING</code></td><td>Result string on stdout</td></tr>
+<tr><td>Version greater-than</td><td><code>ci::version_gt LHS RHS</code></td><td><code>./ci-toolkit version gt LHS RHS</code></td><td>Status only</td></tr>
+<tr><td>Version greater-or-equal</td><td><code>ci::version_ge LHS RHS</code></td><td><code>./ci-toolkit version ge LHS RHS</code></td><td>Status only</td></tr>
+<tr><td>Equality predicate</td><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>./ci-toolkit eq ACTUAL EXPECTED</code></td><td>Status only</td></tr>
+<tr><td>Inequality predicate</td><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>./ci-toolkit ne ACTUAL EXPECTED</code></td><td>Status only</td></tr>
+<tr><td>Allow-list predicate</td><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>./ci-toolkit in VALUE CANDIDATE...</code></td><td>Status only</td></tr>
+<tr><td>Deny-list predicate</td><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>./ci-toolkit not-in VALUE CANDIDATE...</code></td><td>Status only</td></tr>
+<tr><td>Require file</td><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>./ci-toolkit file require NAME PATH [HINT]</code></td><td>No stdout</td></tr>
+<tr><td>Require directory</td><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>./ci-toolkit dir require NAME PATH [HINT]</code></td><td>No stdout</td></tr>
+<tr><td>Require regex match</td><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>./ci-toolkit match require NAME VALUE REGEX [DESCRIPTION]</code></td><td>No stdout</td></tr>
+<tr><td>Require unsigned int</td><td><code>ci::require_uint NAME VALUE</code></td><td><code>./ci-toolkit uint require NAME VALUE</code></td><td>No stdout</td></tr>
+<tr><td>Shell-escape argv</td><td><code>ci::shell_join ARG...</code></td><td><code>./ci-toolkit shell join ARG...</code></td><td>Bash-escaped command string</td></tr>
+<tr><td>ERR trap</td><td><code>ci::trap_err</code></td><td><code>./ci-toolkit trap-err</code></td><td>Source installs trap; CLI returns <code>64</code> with hint</td></tr>
+<tr><td>Slack webhook</td><td><code>ci::slack_webhook URL_VAR PROJECT STATUS MESSAGE</code></td><td><code>./ci-toolkit slack webhook URL_VAR PROJECT STATUS MESSAGE</code></td><td>No stdout</td></tr>
+</tbody></table>
+<h3 id="syntax-reference-argument-meanings">Syntax reference: argument meanings</h3>
+<table><thead><tr><th>Name</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>VAR_NAME</code></td><td>Name of an environment variable, not its value.</td><td><code>DEPLOY_TOKEN</code></td></tr>
+<tr><td><code>NAME</code></td><td>Safe logical label to print on failure. Use this instead of printing secrets or paths.</td><td><code>SSH_KEY</code>, <code>BUILD_DIR</code></td></tr>
+<tr><td><code>PATH</code></td><td>File or directory path to validate. Not printed on validation failure.</td><td><code>&quot;$DEPLOY_SSH_KEY&quot;</code></td></tr>
+<tr><td><code>HINT</code></td><td>Optional remediation text printed after the safe logical name.</td><td><code>&quot;mount deploy key&quot;</code></td></tr>
+<tr><td><code>REGEX</code></td><td>Bash extended regular expression used by <code>[[ value =~ regex ]]</code>.</td><td><code>&#x27;^[0-9]+$&#x27;</code></td></tr>
+<tr><td><code>DESCRIPTION</code></td><td>Safe description of the regex rule. Printed instead of the raw value.</td><td><code>&quot;digits only&quot;</code></td></tr>
+<tr><td><code>ATTEMPTS</code></td><td>Positive integer retry count. Omit for default <code>3</code> in CLI retry.</td><td><code>5</code></td></tr>
+<tr><td><code>SECONDS</code></td><td>Delay between failed retry attempts.</td><td><code>30</code></td></tr>
+<tr><td><code>PREFIX</code></td><td>Literal string prefix, not a glob.</td><td><code>v</code></td></tr>
+<tr><td><code>CANDIDATE...</code></td><td>One or more literal allowed/blocked strings.</td><td><code>staging production</code></td></tr>
+<tr><td><code>URL_VAR</code></td><td>Name of the env var that stores a Slack webhook URL.</td><td><code>SLACK_WEBHOOK_URL</code></td></tr>
+</tbody></table>
         </section>
 
         <!-- doc-key: discovery-read -->
         <section id="discovery-read">
-            <h2>Discovery / read</h2>
-            <p>Explore the toolkit's capabilities without making changes:</p>
-            <ul>
-                <li><strong><code>ci::ls</code></strong>: List all available functions with descriptions. This is the fastest way to see what's available.</li>
-                <li><strong><code>ci::is_true VAR</code></strong>: A robust check for boolean-like variables. It returns success if the variable is <code>1</code> or <code>true</code>.</li>
-            </ul>
-
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">Raw Bash comparison:</p>
-                <pre><code># Raw Bash (brittle)
-if [[ "${SKIP_TESTS:-}" == "true" ]]; then ...
-
-# Gungnir (robust)
-if ci::is_true SKIP_TESTS; then ...</code></pre>
-            </div>
+<h2>Discovery / read</h2>
+<p>Use these commands before changing scripts, during debugging, or when teaching an AI/code assistant what the toolkit provides.</p>
+<h3 id="list-available-functions">List available functions</h3>
+<pre><code class="language-bash">./ci-toolkit ls</code></pre>
+<p><code>ls</code> prints every public <code>ci::</code> function with its <code># @description</code> text. Private helpers named <code>ci::_...</code> are intentionally hidden.</p>
+<h3 id="inspect-cli-usage">Inspect CLI usage</h3>
+<pre><code class="language-bash">./ci-toolkit help</code></pre>
+<p>Use this when you remember the helper but not the exact CLI nesting, for example <code>file require</code> vs <code>require file</code>.</p>
+<h3 id="read-boolean-like-flags">Read boolean-like flags</h3>
+<p><code>ci::is_true VAR</code> returns success only when the variable&#x27;s value is <code>1</code> or <code>true</code>.</p>
+<pre><code class="language-bash">RUN_DEPLOY=${RUN_DEPLOY:-0}
+if ci::is_true RUN_DEPLOY; then
+  ci::info &quot;deploy checks enabled&quot;
+fi</code></pre>
+<p>This avoids ad-hoc comparisons scattered through the script. It intentionally does not treat every non-empty value as true.</p>
+<h3 id="read-paths-and-tags">Read paths and tags</h3>
+<pre><code class="language-bash">repo_root=$(ci::root) || exit $?
+latest_release=$(ci::git_latest_tag v) || exit $?
+version=$(ci::strip_prefix v &quot;$latest_release&quot;)</code></pre>
+<p>Use command substitution for helpers that return data. Because logs go to stderr, stdout stays safe to capture.</p>
         </section>
 
         <!-- doc-key: writes-mutations -->
         <section id="writes-mutations">
-            <h2>Writes / mutations</h2>
-            
-            <h3>Robust Retries</h3>
-            <p>Gungnir's <code>ci::retry</code> is more powerful than a simple loop. It preserves the exit status of the final attempt and logs failures to stderr.</p>
+<h2>Writes / mutations</h2>
+<p>Gungnir does not deploy, build, publish, or mutate your project by itself. It wraps your commands so mutation-heavy scripts fail earlier, retry transient operations, and report clearer logs.</p>
+<h3 id="robust-retries">Robust retries</h3>
+<p><code>ci::retry</code> runs a command up to <code>N</code> times, returns as soon as it succeeds, and otherwise returns the final attempt&#x27;s status. Failed attempts emit warnings to stderr.</p>
+<pre><code class="language-bash"># Source mode
+ci::retry 3 -- curl -fsS https://api.example.com/health
+ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader
 
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">Example: Flaky Network Call</p>
-                <pre><code># Raw Bash (verbose and easy to get wrong)
-n=0; until [ "$n" -ge 3 ]; do
-  curl -fsS https://api.example.com && break
-  n=$((n+1)); sleep 1
-done
-
-# Gungnir
-ci::retry 3 curl -fsS https://api.example.com</code></pre>
-            </div>
-
-            <h3 class="mt-12">Secure Environment Checks</h3>
-            <p><code>ci::require_env</code> ensures a variable exists without accidentally printing its value (even if <code>set -x</code> is on in some environments).</p>
+# CLI mode
+./ci-toolkit retry 3 -- curl -fsS https://api.example.com/health
+./ci-toolkit retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader</code></pre>
+<p>Use retries for operations that are plausibly transient: registry downloads, <code>git fetch</code>, package installs, health probes, <code>curl</code>, <code>rsync</code>, or remote API calls. Do <strong>not</strong> retry deterministic failures such as unit tests, syntax checks, or builds unless you have a specific flaky infrastructure reason.</p>
+<h3 id="secure-environment-checks">Secure environment checks</h3>
+<p><code>ci::require_env NAME</code> checks whether the environment variable named by <code>NAME</code> is set and non-empty. It prints the variable name, never its value.</p>
+<pre><code class="language-bash">ci::require_env REGISTRY_TOKEN || exit $?
+printf &#x27;%s&#x27; &quot;$REGISTRY_TOKEN&quot; | docker login ghcr.io --username ci --password-stdin</code></pre>
+<p>For optional values, prefer defaults:</p>
+<pre><code class="language-bash">ci::env_default REGISTRY_USER ci
+ci::env_default DEPLOY_REAL 0</code></pre>
+<h3 id="required-files-directories-formats-and-integers">Required files, directories, formats, and integers</h3>
+<p>Use validation helpers to name the logical field and keep actual values out of logs.</p>
+<pre><code class="language-bash">ci::require_file SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;create or mount the deploy key&quot; || exit $?
+ci::require_dir BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot; || exit $?
+ci::require_match DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27; || exit $?
+ci::require_uint RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot; || exit $?</code></pre>
+<p>CLI equivalents:</p>
+<pre><code class="language-bash">./ci-toolkit file  require SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;create or mount the deploy key&quot;
+./ci-toolkit dir   require BUILD_DIR &quot;$BUILD_DIR&quot; &quot;run build first&quot;
+./ci-toolkit match require DEPLOY_USER &quot;$DEPLOY_USER&quot; &#x27;^[A-Za-z0-9._-]+$&#x27; &#x27;[A-Za-z0-9._-]+&#x27;
+./ci-toolkit uint  require RETAIN_RELEASES &quot;$RETAIN_RELEASES&quot;</code></pre>
+<h3 id="slack-webhook-notification">Slack webhook notification</h3>
+<p><code>ci::slack_webhook URL_VAR PROJECT STATUS MESSAGE</code> sends a small JSON payload to the webhook URL stored in <code>URL_VAR</code>. It is best-effort: if the URL variable is empty or <code>curl</code> is missing, it warns and returns success so notifications do not break the deploy path.</p>
+<pre><code class="language-bash">ci::slack_webhook SLACK_WEBHOOK_URL &quot;my-service&quot; &quot;success&quot; &quot;release $IMAGE_TAG deployed&quot;</code></pre>
+<p>CLI equivalent:</p>
+<pre><code class="language-bash">./ci-toolkit slack webhook SLACK_WEBHOOK_URL &quot;my-service&quot; &quot;success&quot; &quot;release $IMAGE_TAG deployed&quot;</code></pre>
         </section>
 
         <!-- doc-key: advanced-tools -->
         <section id="advanced-tools">
-            <h2>Advanced tools</h2>
-            <h3>Path Discovery</h3>
-            <p>Finding the repository root or a specific configuration file is a common pain point in CI.</p>
-            <ul>
-                <li><strong><code>ci::find_up &lt;marker&gt;</code></strong>: Searches upwards from the current directory until it finds a file or directory named <code>&lt;marker&gt;</code>.</li>
-                <li><strong><code>ci::root</code></strong>: A shortcut for <code>ci::find_up .git</code>.</li>
-            </ul>
+<h2>Advanced tools</h2>
+<h3 id="logging-and-failure-helpers">Logging and failure helpers</h3>
+<pre><code class="language-bash">ci::info &quot;starting&quot;
+ci::warn &quot;optional cache unavailable&quot;
+ci::error &quot;preflight failed&quot;
+ci::debug &quot;resolved BUILD_DIR=$BUILD_DIR&quot;
+ci::die &quot;unsupported deploy target&quot; || exit 1</code></pre>
+<p><code>ci::debug</code> is silent unless <code>CI_TOOLKIT_DEBUG=1</code>. <code>ci::die</code> logs at error level and returns <code>1</code>; it does not call <code>exit</code> for you.</p>
+<h3 id="path-discovery">Path discovery</h3>
+<pre><code class="language-bash">repo_root=$(ci::root) || exit $?
+config_root=$(ci::find_up package.json) || exit $?</code></pre>
+<p><code>ci::find_up &lt;marker&gt;</code> walks upward from <code>$PWD</code> until it finds a file or directory named <code>&lt;marker&gt;</code> and prints the matching directory. <code>ci::root</code> is shorthand for <code>ci::find_up .git</code>.</p>
+<h3 id="version-style-comparison-and-tag-discovery">Version-style comparison and tag discovery</h3>
+<pre><code class="language-bash">latest=$(ci::git_latest_tag v) || exit $?
+version=$(ci::strip_prefix v &quot;$latest&quot;)
 
-            <div class="paper-card p-6 mt-6">
-                <p class="font-bold mb-2">Raw Bash comparison:</p>
-                <pre><code># Raw Bash (fixed depth, often breaks if script moves)
-REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)
-
-# Gungnir (dynamic, works from any sub-directory)
-REPO_ROOT=$(ci::root)</code></pre>
-            </div>
-
-            <h3 class="mt-12">Version-style Comparison</h3>
-            <p>For comparing semver-ish strings (tool versions, git tags) without writing brittle lexicographic <code>[[ "$a" &gt; "$b" ]]</code> checks. Backed by <code>sort -V</code>.</p>
-            <pre><code># Source mode
-if ci::version_ge "$BUN_VERSION" "1.1.0"; then
-  ci::info "bun is new enough"
+if ci::version_ge &quot;$version&quot; &quot;1.2.0&quot;; then
+  ci::info &quot;release is new enough&quot;
 fi
 
-# CLI mode
-./ci-toolkit version gt 1.2.4 1.2.3   # exits 0
-./ci-toolkit version ge 1.2.3 1.2.3   # exits 0</code></pre>
-            <p>The helpers accept <code>vX.Y.Z</code>, <code>X.Y.Z</code>, <code>X.Y</code>, and simple pre-release tags. Build metadata (<code>1.0.0+build42</code>) sorts lexicographically by the tail — fine for CI, not a SemVer-2.0 promise.</p>
-
-            <h3 class="mt-12">Prefix stripping</h3>
-            <p>A small wrapper around Bash's <code>${var#prefix}</code> that also works from CLI pipelines and treats glob characters literally.</p>
-            <pre><code># Source mode
-TAG=$(ci::git_latest_tag v)
-VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
-
-# CLI mode
-./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
-            <p>If the prefix is absent, the original string is returned unchanged.</p>
-
-            <h3 class="mt-12">String predicates</h3>
-            <p>Lightweight status-code helpers for the most common CI conditional: "does this string equal that string?" / "is this value in this allowed list?" They compare literal Bash strings — no glob, regex, or case folding — and never print compared values, which keeps them safe for inputs that may be sensitive.</p>
-            <pre><code># Source mode
-branch=$(git branch --show-current)
-if ci::eq "$branch" main; then
-  ci::info "running main-branch checks"
+if ci::version_gt &quot;1.2.4&quot; &quot;1.2.3&quot;; then
+  ci::info &quot;greater&quot;
+fi</code></pre>
+<p>CLI equivalents:</p>
+<pre><code class="language-bash">./ci-toolkit git latest-tag v
+./ci-toolkit strip-prefix v v1.2.3
+./ci-toolkit version gt 1.2.4 1.2.3
+./ci-toolkit version ge 1.2.3 1.2.3</code></pre>
+<p>These helpers rely on <code>sort -V</code>. They are good for CI version gates and release tags, but they are not a full SemVer 2.0 implementation.</p>
+<h3 id="string-predicates">String predicates</h3>
+<p>String predicates return status only and never print compared values.</p>
+<pre><code class="language-bash">branch=$(git branch --show-current)
+if ci::eq &quot;$branch&quot; main; then
+  ci::info &quot;main branch checks&quot;
 fi
 
-target_env="${TARGET_ENV:-}"
-if ci::in "$target_env" staging production preview; then
-  ci::info "accepted deploy target: $target_env"
+if ci::in &quot;${TARGET_ENV:-}&quot; staging production preview; then
+  ci::info &quot;accepted target&quot;
 else
-  ci::die "unsupported deploy target: $target_env" || exit 1
-fi
-
-# CLI mode
-./ci-toolkit eq "$TARGET_ENV" production
-./ci-toolkit in  "$TARGET_ENV" staging production preview
-./ci-toolkit not-in "$TARGET_ENV" dev experimental</code></pre>
-            <table>
-              <thead><tr><th>Helper</th><th>CLI</th><th>Behavior</th></tr></thead>
-              <tbody>
-                <tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td>Exit <code>0</code> iff <code>ACTUAL == EXPECTED</code>.</td></tr>
-                <tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td>Exit <code>0</code> iff <code>ACTUAL != EXPECTED</code>.</td></tr>
-                <tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches any <code>CANDIDATE</code>.</td></tr>
-                <tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches no <code>CANDIDATE</code>.</td></tr>
-              </tbody>
-            </table>
-            <p>Fewer than 2 arguments returns <code>64</code> (usage error) without printing values.</p>
-
-            <h3 class="mt-12">Validation helpers</h3>
-            <p>Four short helpers that turn repeated guard blocks into named contracts. They all report the <strong>logical name</strong> of the failing field, never the value or path — safe for secrets and avoidable PII.</p>
-            <pre><code># Source mode
-ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
-ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
-ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
-ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
-
-# CLI mode
-./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
-./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
-./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
-./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"</code></pre>
-            <table>
-              <thead><tr><th>Helper</th><th>CLI</th><th>Behavior</th></tr></thead>
-              <tbody>
-                <tr><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>file require</code></td><td>Exit <code>1</code> if <code>PATH</code> is missing or not a regular file.</td></tr>
-                <tr><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>dir require</code></td><td>Exit <code>1</code> if <code>PATH</code> is missing or not a directory.</td></tr>
-                <tr><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>match require</code></td><td>Exit <code>1</code> if <code>VALUE</code> does not match the Bash extended <code>REGEX</code>.</td></tr>
-                <tr><td><code>ci::require_uint NAME VALUE</code></td><td><code>uint require</code></td><td>Exit <code>1</code> if <code>VALUE</code> is not <code>^[0-9]+$</code>.</td></tr>
-              </tbody>
-            </table>
-            <p>Every helper returns <code>64</code> on usage error and never echoes the rejected value into stderr.</p>
-
-            <h3 class="mt-12">Shell argument escaping</h3>
-            <p><code>ci::shell_join</code> (CLI: <code>shell join</code>) turns an argv array into a single shell-escaped command string that survives re-parsing by Bash. Useful when an external tool insists on a command string instead of an argv array — <code>rsync -e</code> is the canonical example.</p>
-            <pre><code>source ./ci-toolkit
-
-SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
-RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
-rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"</code></pre>
-            <p>The output uses Bash's <code>printf '%q'</code>, so the escaping is Bash-specific (not POSIX-sh portable). The toolkit already targets Bash 4+, so this is intentional. Do not use the result as input to <code>eval</code> on untrusted data.</p>
-
-            <h3 class="mt-12">Default ERR trap</h3>
-            <p><code>ci::trap_err</code> installs a one-line ERR trap so failures inside CI scripts report exit code, <code>file:line</code>, function name, and the failing <code>BASH_COMMAND</code>. Source mode only — the CLI form is informational.</p>
-            <pre><code>source ./ci-toolkit
-ci::trap_err
-
-# Anywhere below, a failing command prints:
-# [error] command failed (exit=1) at deploy.sh:42 in run_migrations: psql -c "..."</code></pre>
-            <p>It enables <code>set -E</code> (errtrace) so the trap propagates into functions, but leaves <code>set -e/-u/pipefail</code> alone — your script keeps its existing flow control. A second <code>ci::trap_err</code> call replaces the first (standard Bash <code>trap</code> semantics).</p>
+  ci::die &quot;unsupported TARGET_ENV&quot; || exit 1
+fi</code></pre>
+<table><thead><tr><th>Helper</th><th>CLI</th><th>Behavior</th></tr></thead><tbody>
+<tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td>Exit <code>0</code> iff <code>ACTUAL == EXPECTED</code>.</td></tr>
+<tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td>Exit <code>0</code> iff <code>ACTUAL != EXPECTED</code>.</td></tr>
+<tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches any candidate.</td></tr>
+<tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches no candidate.</td></tr>
+</tbody></table>
+<h3 id="shell-argument-escaping">Shell argument escaping</h3>
+<p><code>ci::shell_join</code> converts an argv array into one Bash-escaped command string. This is useful for tools that require a command string instead of argv, such as <code>rsync -e</code>.</p>
+<pre><code class="language-bash">SSH_OPTS=(-i &quot;$DEPLOY_SSH_KEY&quot; -p &quot;$DEPLOY_PORT&quot; -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh &quot;${SSH_OPTS[@]}&quot;)
+rsync -e &quot;$RSYNC_SSH&quot; &quot;$BUILD_DIR/&quot; &quot;$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/&quot;</code></pre>
+<p>The output uses Bash <code>printf &#x27;%q&#x27;</code>. Do not feed untrusted data through <code>eval</code>.</p>
+<h3 id="default-err-trap">Default ERR trap</h3>
+<pre><code class="language-bash">ci::trap_err</code></pre>
+<p><code>ci::trap_err</code> installs an <code>ERR</code> trap that reports exit code, <code>file:line</code>, function name, and the failing <code>BASH_COMMAND</code>. It enables <code>set -E</code> so the trap propagates into functions, but it does not enable <code>set -e</code>, <code>set -u</code>, or <code>pipefail</code> for you.</p>
         </section>
 
         <!-- doc-key: diagnostics-recovery -->
         <section id="diagnostics-recovery">
-            <h2>Diagnostics / recovery</h2>
-            <p>Gungnir helps you build "self-healing" or descriptive CI scripts.</p>
-            <ul>
-                <li><strong><code>ci::die "Message"</code></strong>: Logs an error and returns <code>1</code>. Use it with <code>|| exit 1</code> in your main script logic.</li>
-                <li><strong><code>ci::require_tool</code></strong>: Prevents "command not found" errors halfway through a long-running job by checking dependencies upfront.</li>
-            </ul>
+<h2>Diagnostics / recovery</h2>
+<h3 id="exit-codes">Exit codes</h3>
+<table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td>Success.</td></tr>
+<tr><td><code>1</code></td><td>A runtime check failed, a predicate was false, a marker was not found, or retries were exhausted.</td></tr>
+<tr><td><code>64</code></td><td>Usage error: unknown command, missing required arguments, invalid retry count, invalid regex, or a source/CLI mismatch such as running <code>trap-err</code> as a CLI action.</td></tr>
+</tbody></table>
+<h3 id="troubleshooting-guide">Troubleshooting guide</h3>
+<table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>bad array subscript</code> or unexpected Bash behavior on macOS</td><td>Script is running under Bash 3.2.</td><td>Use <code>#!/usr/bin/env bash</code> and install Bash 4+ (<code>brew install bash</code>).</td></tr>
+<tr><td>Version/tag helpers complain about <code>sort -V</code></td><td>Your <code>sort</code> lacks version-sort support.</td><td>Install GNU coreutils or ensure a compatible <code>sort</code> is on <code>PATH</code>.</td></tr>
+<tr><td>A value is missing from logs</td><td>This is usually intentional.</td><td>Validation helpers avoid printing values to prevent secret leakage. Log safe summaries yourself if needed.</td></tr>
+<tr><td><code>ci::debug</code> prints nothing</td><td>Debug logging is disabled.</td><td>Run with <code>CI_TOOLKIT_DEBUG=1</code>.</td></tr>
+<tr><td><code>ci::root</code> fails</td><td>No <code>.git</code> directory exists above <code>$PWD</code>.</td><td>Run from inside a checkout, or use <code>ci::find_up &lt;project-marker&gt;</code>.</td></tr>
+<tr><td>CLI command exits <code>64</code></td><td>Arguments do not match <code>./ci-toolkit help</code>.</td><td>Re-run with <code>help</code>; check nested command order.</td></tr>
+</tbody></table>
+<h3 id="safe-debugging-pattern">Safe debugging pattern</h3>
+<pre><code class="language-bash">CI_TOOLKIT_DEBUG=1 ./your-script.sh</code></pre>
+<p>In source mode, combine <code>ci::trap_err</code> with explicit preflight checks near the top of <code>main()</code> so failures point at the command that actually failed.</p>
         </section>
 
         <!-- doc-key: ai-integration -->
         <section id="ai-integration">
-            <h2>AI-agent integration</h2>
-            <p>Gungnir is built for AI-first development. It ships with a <strong>Claude Code skill</strong> (<code>skills/ci-toolkit/</code>) that helps LLMs recognize when to use the toolkit.</p>
-            <p>When working with an AI agent:</p>
-            <ul>
-                <li>Point the agent to <code>AGENTS.md</code> for repo-specific conventions.</li>
-                <li>Encourage the agent to use <code>ci::require_env</code> and <code>ci::require_tool</code> to prevent brittle scripts.</li>
-                <li>Use <code>ci::retry</code> for any network-dependent calls the agent generates.</li>
-            </ul>
+<h2>AI-agent integration</h2>
+<p>Gungnir is useful for AI-generated CI and deploy scripts because it gives the agent a small, stable vocabulary instead of inviting it to invent custom Bash helpers.</p>
+<h3 id="recommended-prompt-for-an-agent">Recommended prompt for an agent</h3>
+<pre><code class="language-text">Use ./ci-toolkit for CI primitives. Source it in Bash scripts and prefer ci::info,
+ci::warn, ci::die, ci::require_env, ci::require_tool, ci::retry, ci::find_up,
+ci::root, validation helpers, and ci::shell_join instead of writing custom helpers.
+Keep project-specific build/deploy policy in the script.</code></pre>
+<h3 id="what-to-ask-the-agent-to-preserve">What to ask the agent to preserve</h3>
+<ul>
+<li>Source <code>ci-toolkit</code> relative to the script location.</li>
+<li>Keep a <code>main()</code> entry point and small <code>run_*</code> functions.</li>
+<li>Use <code>ci::require_env</code> for secrets instead of echoing values.</li>
+<li>Use <code>ci::retry</code> only around transient network or remote operations.</li>
+<li>Keep logs on stderr and capture data helpers from stdout.</li>
+<li>Do not introduce CI-vendor-specific assumptions into reusable helpers.</li>
+</ul>
+<h3 id="example-agent-friendly-deployment-preflight">Example: agent-friendly deployment preflight</h3>
+<pre><code class="language-bash">preflight() {
+  ci::require_tool git || exit $?
+  ci::require_tool rsync || exit $?
+  ci::require_env DEPLOY_HOST || exit $?
+  ci::require_env DEPLOY_USER || exit $?
+  ci::require_file SSH_KEY &quot;$DEPLOY_SSH_KEY&quot; &quot;mount deploy key&quot; || exit $?
+}</code></pre>
+<p>The repository also includes <code>skills/ci-toolkit/</code> for Claude Code users. Run <code>scripts/install-skill</code> to symlink it into your local Claude skills directory.</p>
         </section>
 
         <!-- doc-key: documentation-maintenance -->
         <section id="documentation-maintenance">
-            <h2>Documentation maintenance</h2>
-            <p>Gungnir maintains documentation parity using a dual Markdown and HTML approach. Every topic is anchored by a <code><!-- doc-key: id --></code> comment.</p>
-            <p>Consistency across locales and formats is verified via:</p>
-            <pre><code>bun run scripts/check-user-docs.ts</code></pre>
-            <p>This ensures that the reference (<code>index.md</code>) and the visual surface (<code>index.html</code>) always present the same features in the same order.</p>
+<h2>Documentation maintenance</h2>
+<p>User documentation is kept in Markdown and HTML for each locale:</p>
+<pre><code class="language-text">docs/user/en/index.md
+docs/user/en/index.html
+docs/user/zh-TW/index.md
+docs/user/zh-TW/index.html</code></pre>
+<p>Every major topic is anchored by a doc-key marker comment. The doc-key order must match between Markdown and HTML for each locale so generated/user-facing surfaces stay navigable.</p>
+<p>Run the documentation parity check after edits:</p>
+<pre><code class="language-bash">bun run scripts/check-user-docs.ts</code></pre>
+<p>For broader repository validation, run:</p>
+<pre><code class="language-bash">./scripts/test
+./scripts/lint
+./scripts/smoke</code></pre>
+<p>When adding a new public helper, update documentation in this order:</p>
+<ol class="list-decimal pl-6 mb-8 space-y-3 text-text-muted">
+<li class="block">Add or update the helper&#x27;s <code># @description</code> above the public <code>ci::</code> function.</li>
+<li class="block">Update <code>./ci-toolkit help</code> usage text and CLI examples.</li>
+<li class="block">Add source-mode and CLI-mode tests.</li>
+<li class="block">Update <code>README.md</code>, <code>CHANGELOG.md</code>, and the user docs.</li>
+<li class="block">Run the doc parity check and the quality gates above.</li>
+</ol>
         </section>
-
-        <footer class="mt-32 pb-20 text-center">
-            <div class="h-px w-24 bg-border mx-auto mb-8"></div>
-            <p class="text-text-muted text-sm font-medium">Gungnir documentation</p>
-        </footer>
+        <footer class="mt-32 pb-20 text-center"><div class="h-px w-24 bg-border mx-auto mb-8"></div><p class="text-text-muted text-sm font-medium">Gungnir documentation</p></footer>
     </main>
 
     <script>
@@ -364,9 +551,7 @@ ci::trap_err
                     const id = entry.target.getAttribute('id');
                     document.querySelectorAll('.nav-item a').forEach(link => {
                         link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${id}`) {
-                            link.classList.add('active');
-                        }
+                        if (link.getAttribute('href') === `#${id}`) link.classList.add('active');
                     });
                 }
             });
