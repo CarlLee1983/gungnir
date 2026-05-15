@@ -276,6 +276,39 @@ fi
             </table>
             <p>少於 2 個參數視為使用方式錯誤，回傳 <code>64</code>，且不會印出任何值。</p>
 
+            <h3 class="mt-12">驗證輔助函式</h3>
+            <p>四個短小的驗證函式，把腳本裡重複的 guard 區塊收斂成具名契約。失敗時只報「邏輯欄位名稱」，<strong>不會印出 VALUE 或 PATH 的內容</strong>，因此可以安全用於敏感輸入。</p>
+            <pre><code># Source 模式
+ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
+ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
+ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
+ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
+
+# CLI 模式
+./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
+./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
+./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
+./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"</code></pre>
+            <table>
+              <thead><tr><th>輔助函式</th><th>CLI</th><th>行為</th></tr></thead>
+              <tbody>
+                <tr><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>file require</code></td><td><code>PATH</code> 不存在或不是檔案時離開碼 <code>1</code>。</td></tr>
+                <tr><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>dir require</code></td><td><code>PATH</code> 不存在或不是目錄時離開碼 <code>1</code>。</td></tr>
+                <tr><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>match require</code></td><td><code>VALUE</code> 不符 Bash 延伸正則 <code>REGEX</code> 時離開碼 <code>1</code>。</td></tr>
+                <tr><td><code>ci::require_uint NAME VALUE</code></td><td><code>uint require</code></td><td><code>VALUE</code> 不是 <code>^[0-9]+$</code> 時離開碼 <code>1</code>。</td></tr>
+              </tbody>
+            </table>
+            <p>使用方式錯誤一律回傳 <code>64</code>，並且<strong>不會</strong>將被拒絕的值寫入 stderr。</p>
+
+            <h3 class="mt-12">Shell 參數逃逸</h3>
+            <p><code>ci::shell_join</code>（CLI：<code>shell join</code>）把 argv 陣列展開成單一的 shell-escaped 字串，可被 Bash 重新解析。典型用途是把命令字串塞進 <code>rsync -e</code> 之類只接受字串、不接受 argv 陣列的旗標。</p>
+            <pre><code>source ./ci-toolkit
+
+SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
+rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"</code></pre>
+            <p>輸出使用 Bash 內建的 <code>printf '%q'</code>，所以逃逸結果是 Bash-specific，不保證在 POSIX sh 下可移植。本工具鏈目標就是 Bash 4+，這是有意為之的。<strong>不要</strong>將其結果交給未驗證資料的 <code>eval</code>。</p>
+
             <h3 class="mt-12">預設 ERR 陷阱</h3>
             <p><code>ci::trap_err</code> 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 <code>exit code</code>、<code>file:line</code>、函式名稱與失敗的 <code>BASH_COMMAND</code>。僅在 source 模式生效 — CLI 形式只是說明用途。</p>
             <pre><code>source ./ci-toolkit

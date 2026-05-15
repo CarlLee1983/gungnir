@@ -276,6 +276,39 @@ fi
             </table>
             <p>Fewer than 2 arguments returns <code>64</code> (usage error) without printing values.</p>
 
+            <h3 class="mt-12">Validation helpers</h3>
+            <p>Four short helpers that turn repeated guard blocks into named contracts. They all report the <strong>logical name</strong> of the failing field, never the value or path — safe for secrets and avoidable PII.</p>
+            <pre><code># Source mode
+ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
+ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
+ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
+ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
+
+# CLI mode
+./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
+./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
+./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
+./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"</code></pre>
+            <table>
+              <thead><tr><th>Helper</th><th>CLI</th><th>Behavior</th></tr></thead>
+              <tbody>
+                <tr><td><code>ci::require_file NAME PATH [HINT]</code></td><td><code>file require</code></td><td>Exit <code>1</code> if <code>PATH</code> is missing or not a regular file.</td></tr>
+                <tr><td><code>ci::require_dir NAME PATH [HINT]</code></td><td><code>dir require</code></td><td>Exit <code>1</code> if <code>PATH</code> is missing or not a directory.</td></tr>
+                <tr><td><code>ci::require_match NAME VALUE REGEX [DESCRIPTION]</code></td><td><code>match require</code></td><td>Exit <code>1</code> if <code>VALUE</code> does not match the Bash extended <code>REGEX</code>.</td></tr>
+                <tr><td><code>ci::require_uint NAME VALUE</code></td><td><code>uint require</code></td><td>Exit <code>1</code> if <code>VALUE</code> is not <code>^[0-9]+$</code>.</td></tr>
+              </tbody>
+            </table>
+            <p>Every helper returns <code>64</code> on usage error and never echoes the rejected value into stderr.</p>
+
+            <h3 class="mt-12">Shell argument escaping</h3>
+            <p><code>ci::shell_join</code> (CLI: <code>shell join</code>) turns an argv array into a single shell-escaped command string that survives re-parsing by Bash. Useful when an external tool insists on a command string instead of an argv array — <code>rsync -e</code> is the canonical example.</p>
+            <pre><code>source ./ci-toolkit
+
+SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
+rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"</code></pre>
+            <p>The output uses Bash's <code>printf '%q'</code>, so the escaping is Bash-specific (not POSIX-sh portable). The toolkit already targets Bash 4+, so this is intentional. Do not use the result as input to <code>eval</code> on untrusted data.</p>
+
             <h3 class="mt-12">Default ERR trap</h3>
             <p><code>ci::trap_err</code> installs a one-line ERR trap so failures inside CI scripts report exit code, <code>file:line</code>, function name, and the failing <code>BASH_COMMAND</code>. Source mode only — the CLI form is informational.</p>
             <pre><code>source ./ci-toolkit

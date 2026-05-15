@@ -167,6 +167,47 @@ fi
 
 少於 2 個參數視為使用方式錯誤，回傳 `64`，且不會印出任何值。
 
+### 驗證輔助函式
+
+四個短小的驗證函式，把腳本裡重複的 guard 區塊收斂成具名契約。失敗時只報「邏輯欄位名稱」，**不會印出 VALUE 或 PATH 的內容**，因此可以安全用於敏感輸入。
+
+```bash
+# Source 模式
+ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
+ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
+ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
+ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
+
+# CLI 模式
+./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
+./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
+./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
+./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"
+```
+
+| 輔助函式 | CLI | 行為 |
+| --- | --- | --- |
+| `ci::require_file NAME PATH [HINT]` | `file require` | `PATH` 不存在或不是檔案時離開碼 `1`。 |
+| `ci::require_dir NAME PATH [HINT]` | `dir require` | `PATH` 不存在或不是目錄時離開碼 `1`。 |
+| `ci::require_match NAME VALUE REGEX [DESCRIPTION]` | `match require` | `VALUE` 不符 Bash 延伸正則 `REGEX` 時離開碼 `1`。 |
+| `ci::require_uint NAME VALUE` | `uint require` | `VALUE` 不是 `^[0-9]+$` 時離開碼 `1`。 |
+
+使用方式錯誤一律回傳 `64`，並且**不會**將被拒絕的值寫入 stderr。
+
+### Shell 參數逃逸
+
+`ci::shell_join`（CLI：`shell join`）把 argv 陣列展開成單一的 shell-escaped 字串，可被 Bash 重新解析。典型用途是把命令字串塞進 `rsync -e` 之類只接受字串、不接受 argv 陣列的旗標。
+
+```bash
+source ./ci-toolkit
+
+SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
+rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"
+```
+
+輸出使用 Bash 內建的 `printf '%q'`，所以逃逸結果是 Bash-specific，不保證在 POSIX sh 下可移植。本工具鏈目標就是 Bash 4+，這是有意為之的。**不要**將其結果交給未驗證資料的 `eval`。
+
 ### 預設 ERR 陷阱
 
 `ci::trap_err` 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 `exit code`、`file:line`、函式名稱與失敗的 `BASH_COMMAND`。僅在 source 模式生效 — CLI 形式只是說明用途。

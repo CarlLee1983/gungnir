@@ -167,6 +167,47 @@ fi
 
 Fewer than 2 arguments returns `64` (usage error) without printing values.
 
+### Validation helpers
+
+Four short helpers that turn repeated guard blocks into named contracts. They all report the **logical name** of the failing field, never the value or path — safe for secrets and avoidable PII.
+
+```bash
+# Source mode
+ci::require_file LATEST_NAME_FILE "$DIST_DIR/.latest-name" "run build.sh first" || exit $?
+ci::require_dir  STAGING_DIR       "$STAGING_DIR" "run build.sh first" || exit $?
+ci::require_match DEPLOY_USER     "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+' || exit $?
+ci::require_uint  DEPLOY_RETAIN   "$DEPLOY_RETAIN" || exit $?
+
+# CLI mode
+./ci-toolkit file  require LATEST_NAME_FILE "$DIST_DIR/.latest-name"
+./ci-toolkit dir   require STAGING_DIR      "$STAGING_DIR"
+./ci-toolkit match require DEPLOY_USER      "$DEPLOY_USER" '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
+./ci-toolkit uint  require DEPLOY_RETAIN    "$DEPLOY_RETAIN"
+```
+
+| Helper | CLI | Behavior |
+| --- | --- | --- |
+| `ci::require_file NAME PATH [HINT]` | `file require` | Exit `1` if `PATH` is missing or not a regular file. |
+| `ci::require_dir NAME PATH [HINT]` | `dir require` | Exit `1` if `PATH` is missing or not a directory. |
+| `ci::require_match NAME VALUE REGEX [DESCRIPTION]` | `match require` | Exit `1` if `VALUE` does not match the Bash extended `REGEX`. |
+| `ci::require_uint NAME VALUE` | `uint require` | Exit `1` if `VALUE` is not `^[0-9]+$`. |
+
+Every helper returns `64` on usage error and never echoes the rejected value into stderr.
+
+### Shell argument escaping
+
+`ci::shell_join` (CLI: `shell join`) turns an argv array into a single shell-escaped command string that survives re-parsing by Bash. Useful when an external tool insists on a command string instead of an argv array — `rsync -e` is the canonical example.
+
+```bash
+source ./ci-toolkit
+
+SSH_OPTS=(-i "$DEPLOY_SSH_KEY" -p "$DEPLOY_PORT" -o BatchMode=yes)
+RSYNC_SSH=$(ci::shell_join ssh "${SSH_OPTS[@]}")
+rsync -e "$RSYNC_SSH" "$STAGING_DIR/" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE/"
+```
+
+The output uses Bash's `printf '%q'`, so the escaping is Bash-specific (not POSIX-sh portable). The toolkit already targets Bash 4+, so this is intentional. Do not use the result as input to `eval` on untrusted data.
+
 ### Default ERR trap
 
 `ci::trap_err` installs a one-line ERR trap so failures inside CI scripts report `exit code`, `file:line`, function name, and the failing `BASH_COMMAND`. Source mode only — the CLI form is informational.
