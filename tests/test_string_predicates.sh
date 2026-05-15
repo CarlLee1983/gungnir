@@ -101,4 +101,34 @@ assert_status 64 "$RUN_STATUS" "source ci::not_in missing candidates exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::not_in" \
   "source ci::not_in missing candidates prints usage"
 
+# -- CLI mode (spec §7.2) -------------------------------------------------
+
+run_capture "$ROOT_DIR/ci-toolkit" eq foo foo
+assert_status 0 "$RUN_STATUS" "CLI eq foo foo exits 0"
+assert_eq "" "$RUN_STDOUT" "CLI eq foo foo writes no stdout"
+assert_eq "" "$RUN_STDERR" "CLI eq foo foo writes no stderr"
+
+run_capture "$ROOT_DIR/ci-toolkit" eq foo bar
+assert_status 1 "$RUN_STATUS" "CLI eq foo bar exits 1"
+assert_eq "" "$RUN_STDOUT" "CLI eq foo bar writes no stdout"
+assert_eq "" "$RUN_STDERR" "CLI eq foo bar writes no stderr"
+
+run_capture "$ROOT_DIR/ci-toolkit" eq foo
+assert_status 64 "$RUN_STATUS" "CLI eq missing arg exits 64"
+
+run_capture "$ROOT_DIR/ci-toolkit" ne foo bar
+assert_status 0 "$RUN_STATUS" "CLI ne foo bar exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" in staging dev staging prod
+assert_status 0 "$RUN_STATUS" "CLI in match exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" in qa dev staging prod
+assert_status 1 "$RUN_STATUS" "CLI in no-match exits 1"
+
+run_capture "$ROOT_DIR/ci-toolkit" not-in qa dev staging prod
+assert_status 0 "$RUN_STATUS" "CLI not-in no-match exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" not-in staging dev staging prod
+assert_status 1 "$RUN_STATUS" "CLI not-in match exits 1"
+
 finish_tests

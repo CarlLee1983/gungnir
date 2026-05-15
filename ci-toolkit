@@ -414,6 +414,10 @@ Usage:
   ci-toolkit log <info|warn|error|debug> <message>
   ci-toolkit env require VAR_NAME
   ci-toolkit env default VAR_NAME DEFAULT_VALUE
+  ci-toolkit eq ACTUAL EXPECTED
+  ci-toolkit ne ACTUAL EXPECTED
+  ci-toolkit in VALUE CANDIDATE...
+  ci-toolkit not-in VALUE CANDIDATE...
   ci-toolkit strip-prefix PREFIX STRING
   ci-toolkit trap-err
   ci-toolkit tool require TOOL_NAME
@@ -592,6 +596,38 @@ ci::cmd_slack() {
   esac
 }
 
+ci::cmd_eq() {
+  if [[ $# -lt 2 ]]; then
+    ci::usage >&2
+    return 64
+  fi
+  ci::eq "$1" "$2"
+}
+
+ci::cmd_ne() {
+  if [[ $# -lt 2 ]]; then
+    ci::usage >&2
+    return 64
+  fi
+  ci::ne "$1" "$2"
+}
+
+ci::cmd_in() {
+  if [[ $# -lt 2 ]]; then
+    ci::usage >&2
+    return 64
+  fi
+  ci::in "$@"
+}
+
+ci::cmd_not_in() {
+  if [[ $# -lt 2 ]]; then
+    ci::usage >&2
+    return 64
+  fi
+  ci::not_in "$@"
+}
+
 ci::cmd_strip_prefix() {
   if [[ $# -lt 2 ]]; then
     ci::usage >&2
@@ -638,6 +674,18 @@ ci::dispatch() {
       ;;
     ls)
       ci::cmd_ls "$@"
+      ;;
+    eq)
+      ci::cmd_eq "$@"
+      ;;
+    ne)
+      ci::cmd_ne "$@"
+      ;;
+    in)
+      ci::cmd_in "$@"
+      ;;
+    not-in)
+      ci::cmd_not_in "$@"
       ;;
     strip-prefix)
       ci::cmd_strip_prefix "$@"
