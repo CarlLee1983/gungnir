@@ -193,6 +193,26 @@ ci::require_file() {
   return 1
 }
 
+# @description Require PATH to exist and be a directory. Reports NAME, never PATH.
+ci::require_dir() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::require_dir NAME PATH [HINT]"
+    return 64
+  fi
+  local name="$1"
+  local path="$2"
+  local hint="${3:-}"
+  if [[ -d "$path" ]]; then
+    return 0
+  fi
+  if [[ -n "$hint" ]]; then
+    ci::error "required directory missing: $name ($hint)"
+  else
+    ci::error "required directory missing: $name"
+  fi
+  return 1
+}
+
 # @description Return 0 iff ACTUAL string-equals EXPECTED. Never prints values.
 ci::eq() {
   if [[ $# -lt 2 ]]; then

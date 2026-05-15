@@ -56,4 +56,33 @@ assert_status 64 "$RUN_STATUS" "source require_file missing args exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::require_file" \
   "source require_file missing args prints usage"
 
+# -- Source mode: ci::require_dir (spec §5.2, §8.1) -----------------------
+
+MISSING_DIR="$TMP_DIR/absent-dir"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_dir STAGING '$EXISTING_DIR'"
+assert_status 0 "$RUN_STATUS" "source require_dir present exits 0"
+assert_eq "" "$RUN_STDOUT" "source require_dir present writes no stdout"
+assert_eq "" "$RUN_STDERR" "source require_dir present writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_dir STAGING '$MISSING_DIR'"
+assert_status 1 "$RUN_STATUS" "source require_dir missing exits 1"
+assert_contains "$RUN_STDERR" "STAGING" "source require_dir missing names STAGING"
+assert_not_contains "$RUN_STDERR" "$MISSING_DIR" \
+  "source require_dir missing does not echo the path"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_dir STAGING '$MISSING_DIR' 'run build.sh first'"
+assert_status 1 "$RUN_STATUS" "source require_dir with hint still exits 1"
+assert_contains "$RUN_STDERR" "run build.sh first" \
+  "source require_dir hint appears in stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_dir FILE_AS_DIR '$EXISTING_FILE'"
+assert_status 1 "$RUN_STATUS" "source require_dir rejects regular file"
+assert_contains "$RUN_STDERR" "FILE_AS_DIR" "source require_dir rejects file, names NAME"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_dir STAGING"
+assert_status 64 "$RUN_STATUS" "source require_dir missing args exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::require_dir" \
+  "source require_dir missing args prints usage"
+
 finish_tests
