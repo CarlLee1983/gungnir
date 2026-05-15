@@ -44,4 +44,25 @@ assert_status 64 "$RUN_STATUS" "source ci::eq missing arg exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::eq" \
   "source ci::eq missing arg prints usage"
 
+# -- Source mode: ci::ne (spec §4.2, §7.1 #5–#8) --------------------------
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::ne foo bar"
+assert_status 0 "$RUN_STATUS" "source ci::ne foo bar exits 0"
+assert_eq "" "$RUN_STDOUT" "source ci::ne foo bar writes no stdout"
+assert_eq "" "$RUN_STDERR" "source ci::ne foo bar writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::ne foo foo"
+assert_status 1 "$RUN_STATUS" "source ci::ne foo foo exits 1"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::ne '' foo"
+assert_status 0 "$RUN_STATUS" "source ci::ne '' foo exits 0"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::ne '' ''"
+assert_status 1 "$RUN_STATUS" "source ci::ne '' '' exits 1"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::ne foo"
+assert_status 64 "$RUN_STATUS" "source ci::ne missing arg exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::ne" \
+  "source ci::ne missing arg prints usage"
+
 finish_tests

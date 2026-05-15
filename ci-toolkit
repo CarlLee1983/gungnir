@@ -182,6 +182,15 @@ ci::eq() {
   [[ "$1" == "$2" ]]
 }
 
+# @description Return 0 iff ACTUAL string-differs from EXPECTED. Never prints values.
+ci::ne() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::ne ACTUAL EXPECTED"
+    return 64
+  fi
+  [[ "$1" != "$2" ]]
+}
+
 # @description Find a marker file by searching up the directory tree.
 ci::find_up() {
   local marker="${1:-}"
