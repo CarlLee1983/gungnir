@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.8 - String predicate helpers
+
+- Added four public string predicate helpers: `ci::eq ACTUAL EXPECTED`, `ci::ne ACTUAL EXPECTED`, `ci::in VALUE CANDIDATE...`, and `ci::not_in VALUE CANDIDATE...`. All four return status codes only; they never `exit`, never print compared values (safe for sensitive inputs), and never write to stdout on normal predicate evaluation. Usage errors return `64` via `ci::error` and print only the helper name in the usage line.
+- Added matching CLI commands `ci-toolkit eq`, `ci-toolkit ne`, `ci-toolkit in`, and `ci-toolkit not-in` as thin wrappers over the source-mode helpers. Dispatch maps the dashed `not-in` command to `ci::not_in`. CLI commands return the same status codes (`0`, `1`, `64`) and emit no stdout on predicate success or failure.
+- Behavior contract: comparisons are literal Bash string equality with no glob, regex, or case folding. Empty strings are valid values for all four helpers (`ci::eq "" ""` exits `0`, `ci::in "" "" x` exits `0`).
+- Added `tests/test_string_predicates.sh` covering source mode (eq/ne/in/not_in success, failure, empty-string, usage error) and CLI mode (eq/ne/in/not-in success, failure, usage error). `scripts/smoke` now also runs one `eq`, one `in`, and one `not-in` check against the real artifact.
+
 ## v0.1.7 - Hardened helpers and release-check
 
 - `ci::slack_webhook` now JSON-escapes `\`, `"`, `\n`, `\r`, and `\t` in `PROJECT`, `STATUS`, and `MESSAGE` before posting. Previously a quote or backslash in the message produced invalid JSON and the Slack webhook rejected the call. Added regression tests in `tests/test_slack_webhook.sh`.
