@@ -27,13 +27,13 @@ Line numbers refer to the StationHub original this script was rewritten from.
 | L11 `TAG_PREFIX="${TAG_PREFIX:-release/}"` | `ci::env_default TAG_PREFIX "release/"` |
 | L33-35 unknown-arg `echo + exit 1` | `ci::die "unknown arg: $1 (try --help)" \|\| exit 1` |
 | L43-46 manual `SLACK_WEBHOOK_URL` unset warning | `ci::slack_webhook` skips automatically when var is empty |
-| L89 `trap 'send_slack_notification failed ...' ERR` | `compose_err_trap '...'` — local helper, annotated `# proposed: ci::trap_err` |
+| L89 `trap 'send_slack_notification failed ...' ERR` | `compose_err_trap '...'` — local helper retained because this script needs a custom Slack callback; the toolkit's callback-less `ci::trap_err` is too narrow here |
 | L92 `cd $PROJECT_DIR` (no check) | `ci::require_env PROJECT_DIR \|\| exit 1; cd "$PROJECT_DIR"` |
 | L99 `git describe --tags --abbrev=0` | preserved (different semantics from "latest matching tag") |
 | L102-104 `git fetch origin` / `git fetch --tags` / `git pull` | each wrapped in `ci::retry 3 ...` |
 | L107 `git tag -l "${TAG_PREFIX}*" \| sort -V \| tail -n1` | `ci::git_latest_tag "$TAG_PREFIX"` |
-| L111-112 `${VAR#$PREFIX}` (4 sites) | `strip_tag_prefix` — local helper, annotated `# proposed: ci::strip_prefix` |
-| L115-119 version compare + exit | `compare_versions_or_exit` — local helper, annotated `# proposed: ci::version_gt` |
+| L111-112 `${VAR#$PREFIX}` (4 sites) | `ci::strip_prefix "$TAG_PREFIX" "$VAR"` (landed in v0.1.6) |
+| L115-119 version compare + exit | `ci::version_gt "$new" "$current" \|\| ci::die "..."` (landed in v0.1.6) |
 | L128-129 `/usr/local/bin/composer` + env | `ci::require_tool composer`; path resolved via PATH |
 | L132-136 composer install + `sleep 30` + retry | `ci::retry 2 --delay 30 -- composer install --no-dev --optimize-autoloader` (landed in v0.1.5) |
 | L138-139 `npm i && npm run build` | preserved; `ci::require_tool npm` guard added |
@@ -52,9 +52,7 @@ Line numbers refer to the StationHub original this script was rewritten from.
 | --- | --- |
 | `parse_cli` (`--skip` / `--tag=` / `--cloudwatch`) | The toolkit deliberately does not parse argv (application policy). |
 | `send_slack_notification` | Multi-line emoji + commit-log + env/version/time template is project policy. `ci::slack_webhook` only guarantees transport (retry + timeouts). |
-| `compose_err_trap` *(temporary)* | Will be replaced when `ci::trap_err` lands — see spec §5.4. |
-| `strip_tag_prefix` *(temporary)* | Will be replaced when `ci::strip_prefix` lands — see spec §5.3. |
-| `compare_versions_or_exit` *(temporary)* | Will be replaced when `ci::version_gt` lands — see spec §5.2. |
+| `compose_err_trap` | The toolkit's `ci::trap_err` is a callback-less default printer; this script needs to invoke `send_slack_notification` on failure, so the local helper stays. |
 | `sanitize_cloudwatch_token` | CloudWatch-specific naming policy (spec §6.3 not-collected). |
 | `compute_cloudwatch_log_group` | Same as above (spec §6.4 not-collected). |
 | `parse_blue_green_target_dir` | Blue/green flip is deployment-strategy policy. |
@@ -64,12 +62,12 @@ Line numbers refer to the StationHub original this script was rewritten from.
 
 ## ci-toolkit API proposals surfaced by this retrofit
 
-While rewriting, four high-ROI helpers stood out. Each gets its own future plan; **none are implemented yet**. Inside `deploy-prod.sh`, the temporary local helpers each carry a `# proposed: ci::xxx (see spec §5.X, plan TBD)` annotation. Once a proposal lands, replace the local function with the new `ci::*` call and delete the annotation.
+While rewriting, four high-ROI helpers stood out. Three have since landed in the toolkit; one (`ci::trap_err`) landed in a narrower form than the original proposal.
 
-1. **`ci::retry --delay SECONDS`** (spec §5.1) — **landed in v0.1.5.** Adds an inter-attempt sleep to `ci::retry`; covers packagist/npm-registry transient failures. `run_composer_install` was updated to use it.
-2. **`ci::version_gt A B` / `ci::version_ge A B`** (spec §5.2) — `sort -V` wrapper for tag-prefix release flows.
-3. **`ci::strip_prefix VALUE PREFIX`** (spec §5.3) — primarily for CLI mode; in source mode, `${VAR#$PREFIX}` is already concise.
-4. **`ci::trap_err CALLBACK`** (spec §5.4) — `set -E` + ERR trap convention common in CI scripts.
+1. **`ci::retry --delay SECONDS`** (spec §5.1) — **landed in v0.1.5.** Adds an inter-attempt sleep to `ci::retry`; covers packagist/npm-registry transient failures. `run_composer_install` uses it.
+2. **`ci::version_gt A B` / `ci::version_ge A B`** (spec §5.2) — **landed in v0.1.6.** `sort -V` wrapper for tag-prefix release flows. `resolve_target_tag` uses `ci::version_gt` directly.
+3. **`ci::strip_prefix PREFIX VALUE`** (spec §5.3) — **landed in v0.1.6.** Used in `send_slack_notification` and `resolve_target_tag`; argument order is `(prefix, value)`, not the original proposal's `(value, prefix)`.
+4. **`ci::trap_err`** (spec §5.4) — **landed in v0.1.6, callback-less.** The shipped helper installs a default `set -E` + ERR trap that prints exit code, file:line, function, and `BASH_COMMAND`. It does not accept a callback, so this script's `compose_err_trap` (which dispatches to `send_slack_notification`) stays local.
 
 ## What deliberately stays out of ci-toolkit
 
@@ -88,11 +86,11 @@ Spec §6 captures eight patterns from this retrofit that look reusable but confl
 
 1. **Vendor the toolkit** next to your deploy script:
    ```bash
-   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.5/ci-toolkit \
+   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.7/ci-toolkit \
        -o infra/ci/ci-toolkit
    chmod +x infra/ci/ci-toolkit
    git add infra/ci/ci-toolkit
-   git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v0.1.5"
+   git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v0.1.7"
    ```
 2. **Source it** at the top of your deploy script:
    ```bash

@@ -119,11 +119,10 @@ send_slack_notification() {
         message+="${notify_message}\n\n"
 
         if [[ -n "$CURRENT_TAG" && -n "$LATEST_TAG" ]]; then
-            current_version=$(strip_tag_prefix "$CURRENT_TAG" "$TAG_PREFIX")
-            new_version=$(strip_tag_prefix "$LATEST_TAG" "$TAG_PREFIX")
+            current_version=$(ci::strip_prefix "$TAG_PREFIX" "$CURRENT_TAG")
+            new_version=$(ci::strip_prefix "$TAG_PREFIX" "$LATEST_TAG")
 
-            # Direct sort -V here — ci::version_gt is still a §5.2 proposal.
-            if [[ "$(printf '%s\n' "$current_version" "$new_version" | sort -V | head -n1)" != "$new_version" ]]; then
+            if ci::version_gt "$new_version" "$current_version"; then
                 message+="版本更新紀錄:\n"
                 gitlogs=$(git log "${CURRENT_TAG}..${LATEST_TAG}" --format="%h %<(100,trunc)%s" 2>/dev/null || true)
                 if [[ -n "$gitlogs" ]]; then
@@ -161,30 +160,6 @@ compose_err_trap() {
     trap "$callback" ERR
 }
 
-# proposed: ci::strip_prefix VALUE PREFIX (see spec §5.3, plan TBD)
-# After §5.3 lands, replace call sites with `ci::strip_prefix "$value" "$prefix"`
-# and delete this function.
-strip_tag_prefix() {
-    local value="${1:-}"
-    local prefix="${2:-}"
-    printf '%s\n' "${value#"$prefix"}"
-}
-
-# proposed: ci::version_gt A B (see spec §5.2, plan TBD)
-# After §5.2 lands, replace this whole function with:
-#     ci::version_gt "$new_version" "$current_version" || {
-#         ci::die "New version ($LATEST_TAG) is not greater..." || exit 1
-#     }
-# and delete this function.
-compare_versions_or_exit() {
-    local new_version="${1:-}"
-    local current_version="${2:-}"
-    if [[ "$(printf '%s\n' "$new_version" "$current_version" | sort -V | head -n1)" == "$new_version" ]]; then
-        ci::error "New version ($LATEST_TAG) is not greater than current version ($CURRENT_TAG)"
-        ci::die "Deployment aborted!" || exit 1
-    fi
-}
-
 # resolve_target_tag — sets CURRENT_TAG and LATEST_TAG (module-level).
 # Mirrors the original L94-121 version-resolution block.
 resolve_target_tag() {
@@ -205,9 +180,12 @@ resolve_target_tag() {
 
     if [[ "$SKIP_VERSION_CHECK" == "false" ]]; then
         local current_version new_version
-        current_version=$(strip_tag_prefix "$CURRENT_TAG" "$TAG_PREFIX")
-        new_version=$(strip_tag_prefix "$LATEST_TAG" "$TAG_PREFIX")
-        compare_versions_or_exit "$new_version" "$current_version"
+        current_version=$(ci::strip_prefix "$TAG_PREFIX" "$CURRENT_TAG")
+        new_version=$(ci::strip_prefix "$TAG_PREFIX" "$LATEST_TAG")
+        ci::version_gt "$new_version" "$current_version" || {
+            ci::error "New version ($LATEST_TAG) is not greater than current version ($CURRENT_TAG)"
+            ci::die "Deployment aborted!" || exit 1
+        }
     fi
 }
 
