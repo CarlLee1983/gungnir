@@ -246,6 +246,36 @@ VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
 ./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
             <p>若前綴不存在，原字串會原封不動回傳。</p>
 
+            <h3 class="mt-12">字串述詞</h3>
+            <p>CI 條件判斷最常出現的需求 —「這個字串等於那個字串嗎？」、「這個值是否在允許清單裡？」— 都收斂到四個輕量的狀態碼輔助函式。它們以字面字串比對為基礎，不支援萬用字元、正則或大小寫忽略，且<strong>永遠不會印出比較的值</strong>，因此對可能含有敏感資訊的輸入也安全。</p>
+            <pre><code># Source 模式
+branch=$(git branch --show-current)
+if ci::eq "$branch" main; then
+  ci::info "running main-branch checks"
+fi
+
+target_env="${TARGET_ENV:-}"
+if ci::in "$target_env" staging production preview; then
+  ci::info "accepted deploy target: $target_env"
+else
+  ci::die "unsupported deploy target: $target_env" || exit 1
+fi
+
+# CLI 模式
+./ci-toolkit eq "$TARGET_ENV" production
+./ci-toolkit in  "$TARGET_ENV" staging production preview
+./ci-toolkit not-in "$TARGET_ENV" dev experimental</code></pre>
+            <table>
+              <thead><tr><th>輔助函式</th><th>CLI</th><th>行為</th></tr></thead>
+              <tbody>
+                <tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td><code>ACTUAL == EXPECTED</code> 時離開碼 <code>0</code>。</td></tr>
+                <tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td><code>ACTUAL != EXPECTED</code> 時離開碼 <code>0</code>。</td></tr>
+                <tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td><code>VALUE</code> 與任一 <code>CANDIDATE</code> 字面相等時離開碼 <code>0</code>。</td></tr>
+                <tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td><code>VALUE</code> 與所有 <code>CANDIDATE</code> 都不相等時離開碼 <code>0</code>。</td></tr>
+              </tbody>
+            </table>
+            <p>少於 2 個參數視為使用方式錯誤，回傳 <code>64</code>，且不會印出任何值。</p>
+
             <h3 class="mt-12">預設 ERR 陷阱</h3>
             <p><code>ci::trap_err</code> 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 <code>exit code</code>、<code>file:line</code>、函式名稱與失敗的 <code>BASH_COMMAND</code>。僅在 source 模式生效 — CLI 形式只是說明用途。</p>
             <pre><code>source ./ci-toolkit

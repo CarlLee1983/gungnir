@@ -246,6 +246,36 @@ VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
 ./ci-toolkit strip-prefix v v1.2.3     # -> 1.2.3</code></pre>
             <p>If the prefix is absent, the original string is returned unchanged.</p>
 
+            <h3 class="mt-12">String predicates</h3>
+            <p>Lightweight status-code helpers for the most common CI conditional: "does this string equal that string?" / "is this value in this allowed list?" They compare literal Bash strings — no glob, regex, or case folding — and never print compared values, which keeps them safe for inputs that may be sensitive.</p>
+            <pre><code># Source mode
+branch=$(git branch --show-current)
+if ci::eq "$branch" main; then
+  ci::info "running main-branch checks"
+fi
+
+target_env="${TARGET_ENV:-}"
+if ci::in "$target_env" staging production preview; then
+  ci::info "accepted deploy target: $target_env"
+else
+  ci::die "unsupported deploy target: $target_env" || exit 1
+fi
+
+# CLI mode
+./ci-toolkit eq "$TARGET_ENV" production
+./ci-toolkit in  "$TARGET_ENV" staging production preview
+./ci-toolkit not-in "$TARGET_ENV" dev experimental</code></pre>
+            <table>
+              <thead><tr><th>Helper</th><th>CLI</th><th>Behavior</th></tr></thead>
+              <tbody>
+                <tr><td><code>ci::eq ACTUAL EXPECTED</code></td><td><code>eq</code></td><td>Exit <code>0</code> iff <code>ACTUAL == EXPECTED</code>.</td></tr>
+                <tr><td><code>ci::ne ACTUAL EXPECTED</code></td><td><code>ne</code></td><td>Exit <code>0</code> iff <code>ACTUAL != EXPECTED</code>.</td></tr>
+                <tr><td><code>ci::in VALUE CANDIDATE...</code></td><td><code>in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches any <code>CANDIDATE</code>.</td></tr>
+                <tr><td><code>ci::not_in VALUE CANDIDATE...</code></td><td><code>not-in</code></td><td>Exit <code>0</code> iff <code>VALUE</code> matches no <code>CANDIDATE</code>.</td></tr>
+              </tbody>
+            </table>
+            <p>Fewer than 2 arguments returns <code>64</code> (usage error) without printing values.</p>
+
             <h3 class="mt-12">Default ERR trap</h3>
             <p><code>ci::trap_err</code> installs a one-line ERR trap so failures inside CI scripts report exit code, <code>file:line</code>, function name, and the failing <code>BASH_COMMAND</code>. Source mode only — the CLI form is informational.</p>
             <pre><code>source ./ci-toolkit

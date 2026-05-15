@@ -134,6 +134,39 @@ VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
 
 If the prefix is absent, the original string is returned unchanged.
 
+### String predicates
+
+Lightweight status-code helpers for the most common CI conditional: "does this string equal that string?" / "is this value in this allowed list?" They compare literal Bash strings — no glob, regex, or case folding — and never print compared values, which keeps them safe for inputs that may be sensitive.
+
+```bash
+# Source mode
+branch=$(git branch --show-current)
+if ci::eq "$branch" main; then
+  ci::info "running main-branch checks"
+fi
+
+target_env="${TARGET_ENV:-}"
+if ci::in "$target_env" staging production preview; then
+  ci::info "accepted deploy target: $target_env"
+else
+  ci::die "unsupported deploy target: $target_env" || exit 1
+fi
+
+# CLI mode
+./ci-toolkit eq "$TARGET_ENV" production
+./ci-toolkit in  "$TARGET_ENV" staging production preview
+./ci-toolkit not-in "$TARGET_ENV" dev experimental
+```
+
+| Helper | CLI | Behavior |
+| --- | --- | --- |
+| `ci::eq ACTUAL EXPECTED` | `eq` | Exit `0` iff `ACTUAL == EXPECTED`. |
+| `ci::ne ACTUAL EXPECTED` | `ne` | Exit `0` iff `ACTUAL != EXPECTED`. |
+| `ci::in VALUE CANDIDATE...` | `in` | Exit `0` iff `VALUE` matches any `CANDIDATE`. |
+| `ci::not_in VALUE CANDIDATE...` | `not-in` | Exit `0` iff `VALUE` matches no `CANDIDATE`. |
+
+Fewer than 2 arguments returns `64` (usage error) without printing values.
+
 ### Default ERR trap
 
 `ci::trap_err` installs a one-line ERR trap so failures inside CI scripts report `exit code`, `file:line`, function name, and the failing `BASH_COMMAND`. Source mode only — the CLI form is informational.

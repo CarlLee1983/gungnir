@@ -134,6 +134,39 @@ VERSION=$(ci::strip_prefix v "$TAG")   # v1.2.3 -> 1.2.3
 
 若前綴不存在，原字串會原封不動回傳。
 
+### 字串述詞
+
+CI 條件判斷最常出現的需求 —「這個字串等於那個字串嗎？」、「這個值是否在允許清單裡？」— 都收斂到四個輕量的狀態碼輔助函式。它們以字面字串比對為基礎，不支援萬用字元、正則或大小寫忽略，且**永遠不會印出比較的值**，因此對可能含有敏感資訊的輸入也安全。
+
+```bash
+# Source 模式
+branch=$(git branch --show-current)
+if ci::eq "$branch" main; then
+  ci::info "running main-branch checks"
+fi
+
+target_env="${TARGET_ENV:-}"
+if ci::in "$target_env" staging production preview; then
+  ci::info "accepted deploy target: $target_env"
+else
+  ci::die "unsupported deploy target: $target_env" || exit 1
+fi
+
+# CLI 模式
+./ci-toolkit eq "$TARGET_ENV" production
+./ci-toolkit in  "$TARGET_ENV" staging production preview
+./ci-toolkit not-in "$TARGET_ENV" dev experimental
+```
+
+| 輔助函式 | CLI | 行為 |
+| --- | --- | --- |
+| `ci::eq ACTUAL EXPECTED` | `eq` | `ACTUAL == EXPECTED` 時離開碼 `0`。 |
+| `ci::ne ACTUAL EXPECTED` | `ne` | `ACTUAL != EXPECTED` 時離開碼 `0`。 |
+| `ci::in VALUE CANDIDATE...` | `in` | `VALUE` 與任一 `CANDIDATE` 字面相等時離開碼 `0`。 |
+| `ci::not_in VALUE CANDIDATE...` | `not-in` | `VALUE` 與所有 `CANDIDATE` 都不相等時離開碼 `0`。 |
+
+少於 2 個參數視為使用方式錯誤，回傳 `64`，且不會印出任何值。
+
 ### 預設 ERR 陷阱
 
 `ci::trap_err` 安裝一條精簡的 ERR trap，CI 腳本中任何失敗的指令都會印出 `exit code`、`file:line`、函式名稱與失敗的 `BASH_COMMAND`。僅在 source 模式生效 — CLI 形式只是說明用途。
