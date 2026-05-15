@@ -33,7 +33,7 @@ examples/bun-deploy/
 Replace the symlink with a downloaded copy and pin a version:
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.8/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.9/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ```
 
