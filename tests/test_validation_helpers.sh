@@ -118,6 +118,17 @@ assert_status 64 "$RUN_STATUS" "source require_match missing regex exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::require_match" \
   "source require_match missing regex prints usage"
 
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match DEPLOY_USER 'SECRET LEAK CANARY' '['"
+assert_status 64 "$RUN_STATUS" "source require_match invalid regex exits 64"
+assert_contains "$RUN_STDERR" "DEPLOY_USER" \
+  "source require_match invalid regex names DEPLOY_USER"
+assert_contains "$RUN_STDERR" "invalid regex" \
+  "source require_match invalid regex emits toolkit message"
+assert_not_contains "$RUN_STDERR" "invalid regular expression" \
+  "source require_match invalid regex suppresses Bash native error"
+assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
+  "source require_match invalid regex does not echo VALUE"
+
 # -- Source mode: ci::require_uint (spec §5.4, §8.1) ----------------------
 
 run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT 0"
@@ -188,6 +199,16 @@ assert_contains "$RUN_STDERR" "DEPLOY_USER" "CLI match require invalid names DEP
 assert_contains "$RUN_STDERR" "[A-Za-z0-9._-]+" "CLI match require invalid prints description"
 assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
   "CLI match require invalid does not echo VALUE"
+
+run_capture "$ROOT_DIR/ci-toolkit" match require DEPLOY_USER 'SECRET LEAK CANARY' '['
+assert_status 64 "$RUN_STATUS" "CLI match require invalid regex exits 64"
+assert_contains "$RUN_STDERR" "DEPLOY_USER" "CLI match require invalid regex names DEPLOY_USER"
+assert_contains "$RUN_STDERR" "invalid regex" \
+  "CLI match require invalid regex emits toolkit message"
+assert_not_contains "$RUN_STDERR" "invalid regular expression" \
+  "CLI match require invalid regex suppresses Bash native error"
+assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
+  "CLI match require invalid regex does not echo VALUE"
 
 run_capture "$ROOT_DIR/ci-toolkit" uint require COUNT 5
 assert_status 0 "$RUN_STATUS" "CLI uint require 5 exits 0"

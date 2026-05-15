@@ -223,6 +223,13 @@ ci::require_match() {
   local value="$2"
   local regex="$3"
   local description="${4:-$regex}"
+  local probe_status=0
+  # shellcheck disable=SC2319  # $? captures the [[ =~ ]] parse status; intentional
+  { [[ "" =~ $regex ]]; } 2>/dev/null || probe_status=$?
+  if [[ $probe_status -eq 2 ]]; then
+    ci::error "invalid regex for $name"
+    return 64
+  fi
   if [[ "$value" =~ $regex ]]; then
     return 0
   fi
