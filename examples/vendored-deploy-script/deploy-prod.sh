@@ -10,7 +10,7 @@
 # Domain logic is preserved, but project-specific paths are extracted into Hooks.
 #
 # In a real project, vendor ci-toolkit once:
-#   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.7/ci-toolkit \
+#   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.8/ci-toolkit \
 #       -o infra/ci/ci-toolkit && chmod +x infra/ci/ci-toolkit
 
 set -euo pipefail

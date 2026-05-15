@@ -86,11 +86,11 @@ Spec §6 captures eight patterns from this retrofit that look reusable but confl
 
 1. **Vendor the toolkit** next to your deploy script:
    ```bash
-   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.7/ci-toolkit \
+   curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.8/ci-toolkit \
        -o infra/ci/ci-toolkit
    chmod +x infra/ci/ci-toolkit
    git add infra/ci/ci-toolkit
-   git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v0.1.7"
+   git commit -m "chore: [ci] Vendor Gungnir ci-toolkit v0.1.8"
    ```
 2. **Source it** at the top of your deploy script:
    ```bash
