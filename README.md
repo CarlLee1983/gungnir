@@ -16,17 +16,18 @@ CI scripts tend to grow ad-hoc logging, environment checks, retries, and path lo
 
 - Bash 4+ (macOS default `/bin/bash` is 3.2 — install via `brew install bash`).
 - POSIX `coreutils` (already present on Linux and macOS).
+- A `sort` that supports `-V` (version sort). Required by `ci::version_gt`, `ci::version_ge`, and `ci::git_latest_tag`. Modern macOS and GNU coreutils both qualify; pre-Sequoia BSD `sort` does not. The toolkit probes once per shell and errors with a remediation hint (`brew install coreutils`) if `sort -V` is unavailable. Pre-release tag ordering follows whichever `sort -V` is on `PATH` — BSD `sort` and GNU `sort` agree on plain numeric versions but diverge on pre-release components, so pin GNU coreutils if you compare pre-release tags.
 - Optional: `shellcheck` for `./scripts/lint`.
 
 ## Install in CI
 
 ```bash
-curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.6/ci-toolkit -o ci-toolkit
+curl -fsSL https://github.com/CMG/Gungnir/releases/download/v0.1.7/ci-toolkit -o ci-toolkit
 chmod +x ci-toolkit
 ./ci-toolkit version
 ```
 
-Pin to a tag (`v0.1.6` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
+Pin to a tag (`v0.1.7` above). The artifact is a single file with no runtime dependencies beyond Bash 4+.
 
 ## Quickstart
 
@@ -105,13 +106,17 @@ mismatching symlink at the destination.
 | --- | --- |
 | `help`, `-h`, `--help` | Print usage and exit `0`. |
 | `version`, `--version` | Print `ci-toolkit <version>` to stdout. |
+| `version gt LHS RHS` | Exit `0` iff `LHS > RHS` under `sort -V` semantics. Exit `1` otherwise (including equal). Requires `sort -V`. |
+| `version ge LHS RHS` | Exit `0` iff `LHS >= RHS` under `sort -V` semantics. Requires `sort -V`. |
 | `log <info\|warn\|error\|debug> <message>` | Write a structured log line to **stderr**. `debug` is silent unless `CI_TOOLKIT_DEBUG=1`. |
 | `env require VAR_NAME` | Exit `1` if the environment variable is unset or empty. The variable's value is never printed. |
 | `env default VAR_NAME DEFAULT` | Print the value of `VAR_NAME`, or `DEFAULT` if it is unset or empty. |
 | `tool require TOOL_NAME` | Exit `1` if the tool is not found on `PATH`. |
 | `retry [ATTEMPTS] [--delay SECONDS] -- COMMAND [ARGS...]` | Run `COMMAND` up to `ATTEMPTS` times (default `3`). `--delay` sleeps `SECONDS` between failed attempts; defaults to `0`. Returns the last attempt's exit status. |
-| `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. |
-| `slack webhook VAR PROJECT STATUS MSG` | Send a notification to Slack using the URL stored in `VAR`. |
+| `strip-prefix PREFIX STRING` | Print `STRING` with a leading literal `PREFIX` removed (no-op if absent). |
+| `trap-err` | Source-mode only. From the CLI, prints a usage hint and exits `64`. |
+| `git latest-tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` (or any tag if blank) to stdout. Requires `sort -V`. |
+| `slack webhook VAR PROJECT STATUS MSG` | Send a JSON-escaped notification to Slack using the URL stored in `VAR`. |
 | `ls` | List all available `ci::` functions and their descriptions. |
 
 Unknown commands or malformed arguments exit `64` and print usage to stderr.
@@ -145,6 +150,15 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | Function | Description |
 | --- | --- |
 | `ci::retry ATTEMPTS [--delay SECONDS] [--] COMMAND...` | Run `COMMAND` up to `ATTEMPTS` times. `--delay` sleeps `SECONDS` between failed attempts (default `0`). Returns `0` on first success, otherwise returns the final attempt's exit status. Failed attempts log a `warn` line. |
+| `ci::trap_err` | Install a default `ERR` trap that prints exit code, file:line, function, and `BASH_COMMAND` to **stderr**. Sets `set -E` so the trap inherits into shell functions. Source-mode only — the CLI command exits `64` with a hint. |
+
+### Strings & versions
+
+| Function | Description |
+| --- | --- |
+| `ci::strip_prefix PREFIX VALUE` | Print `VALUE` with a leading literal `PREFIX` removed; passes through unchanged if the prefix is absent. |
+| `ci::version_gt LHS RHS` | Return `0` iff `LHS > RHS` under `sort -V` semantics; `1` otherwise (including equal). Returns `64` on usage error and `1` if `sort -V` is unavailable. |
+| `ci::version_ge LHS RHS` | Return `0` iff `LHS >= RHS`. Equal pairs short-circuit before any `sort -V` probe. |
 
 ### Paths
 
@@ -152,8 +166,8 @@ All functions live under the `ci::` namespace and return status codes; none of t
 | --- | --- |
 | `ci::find_up MARKER` | Walk up from `$PWD` toward `/` looking for an entry named `MARKER`. Print the matching directory to **stdout** on success, return `1` if no match. |
 | `ci::root` | Equivalent to `ci::find_up .git`. |
-| `ci::git_latest_tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` to **stdout**. Returns `1` if no match. |
-| `ci::slack_webhook VAR PROJ STAT MSG` | Send a best-effort Slack notification. Skips gracefully if `VAR` is unset or `curl` is missing. |
+| `ci::git_latest_tag [PREFIX]` | Print the latest sorted version tag starting with `PREFIX` to **stdout**. Returns `1` if no match or `sort -V` is unavailable. |
+| `ci::slack_webhook VAR PROJ STAT MSG` | Send a best-effort, JSON-escaped Slack notification. Skips gracefully if `VAR` is unset or `curl` is missing. |
 | `ci::ls` | Print all available `ci::` functions and their descriptions to **stdout**. |
 
 ## Exit codes

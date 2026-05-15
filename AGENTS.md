@@ -28,6 +28,8 @@ bash tests/test_retry_and_paths.sh
 
 Bash 4+. macOS default `/bin/bash` is 3.2 and trips on `set -u` with empty arrays inside the test harness. Install via `brew install bash` so `/usr/bin/env bash` resolves to `/opt/homebrew/bin/bash`.
 
+`ci::version_gt`, `ci::version_ge`, and `ci::git_latest_tag` require a `sort` that implements `-V` (version sort). `ci::_require_sort_v` probes once per shell and returns `1` with a remediation hint if the contract is unmet. If you add a helper that depends on a non-portable coreutil flag, gate it behind a similar `ci::_require_*` probe (private; `ci::_*` names are filtered out of `ci-toolkit ls`) and add a `tests/test_*_contract.sh` covering both available and missing paths.
+
 ## Architecture: one file, three sections, two modes
 
 `ci-toolkit` is organized as:
