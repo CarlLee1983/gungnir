@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.9 - Validation and shell-join helpers
+
+- Added four public validation helpers: `ci::require_file NAME PATH [HINT]`, `ci::require_dir NAME PATH [HINT]`, `ci::require_match NAME VALUE REGEX [DESCRIPTION]`, and `ci::require_uint NAME VALUE`. All four return `0` on success, `1` on validation failure (stderr names `NAME` and, for `require_match`, the rule description or raw regex), and `64` on usage error. They never echo `VALUE` or `PATH` into stderr, which keeps them safe for sensitive inputs.
+- Added `ci::shell_join ARG...` data helper that prints argv as a Bash-escaped command string via `printf '%q'`. Stdout is shell-escaped (Bash-specific, not POSIX-sh portable) and ends in a single trailing newline. Zero args returns `64`. Intended for adapters like `rsync -e` that require a command string instead of an argv array.
+- Added matching nested CLI commands `ci-toolkit file require`, `ci-toolkit dir require`, `ci-toolkit match require`, `ci-toolkit uint require`, and `ci-toolkit shell join` as thin wrappers over the source-mode helpers. All preserve source-mode status codes and never leak rejected values.
+- Added `tests/test_validation_helpers.sh` covering source mode and CLI mode for all four `require_*` helpers, including no-leak assertions for `require_match` and `require_uint`. Added `tests/test_shell_join.sh` covering source/CLI round-trip of argv containing spaces, quotes, backslashes, glob characters, and empty strings, plus zero-arg usage error. `scripts/smoke` now also runs one `uint require` and one `shell join` check against the real artifact.
+
 ## v0.1.8 - String predicate helpers
 
 - Added four public string predicate helpers: `ci::eq ACTUAL EXPECTED`, `ci::ne ACTUAL EXPECTED`, `ci::in VALUE CANDIDATE...`, and `ci::not_in VALUE CANDIDATE...`. All four return status codes only; they never `exit`, never print compared values (safe for sensitive inputs), and never write to stdout on normal predicate evaluation. Usage errors return `64` via `ci::error` and print only the helper name in the usage line.
