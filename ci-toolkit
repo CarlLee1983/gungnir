@@ -230,6 +230,21 @@ ci::require_match() {
   return 1
 }
 
+# @description Require VALUE to be a non-negative base-10 integer (0 or digits, no sign). Reports NAME, never VALUE.
+ci::require_uint() {
+  if [[ $# -lt 2 ]]; then
+    ci::error "Usage: ci::require_uint NAME VALUE"
+    return 64
+  fi
+  local name="$1"
+  local value="$2"
+  if [[ "$value" =~ ^[0-9]+$ ]]; then
+    return 0
+  fi
+  ci::error "invalid $name (non-negative integer required)"
+  return 1
+}
+
 # @description Return 0 iff ACTUAL string-equals EXPECTED. Never prints values.
 ci::eq() {
   if [[ $# -lt 2 ]]; then

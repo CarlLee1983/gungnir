@@ -118,4 +118,44 @@ assert_status 64 "$RUN_STATUS" "source require_match missing regex exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::require_match" \
   "source require_match missing regex prints usage"
 
+# -- Source mode: ci::require_uint (spec §5.4, §8.1) ----------------------
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT 0"
+assert_status 0 "$RUN_STATUS" "source require_uint 0 exits 0"
+assert_eq "" "$RUN_STDOUT" "source require_uint 0 writes no stdout"
+assert_eq "" "$RUN_STDERR" "source require_uint 0 writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT 5"
+assert_status 0 "$RUN_STATUS" "source require_uint 5 exits 0"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT 12345"
+assert_status 0 "$RUN_STATUS" "source require_uint 12345 exits 0"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT -1"
+assert_status 1 "$RUN_STATUS" "source require_uint negative exits 1"
+assert_contains "$RUN_STDERR" "COUNT" "source require_uint negative names COUNT"
+assert_not_contains "$RUN_STDERR" "-1" \
+  "source require_uint negative does not echo VALUE"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT +1"
+assert_status 1 "$RUN_STATUS" "source require_uint signed exits 1"
+assert_contains "$RUN_STDERR" "COUNT" "source require_uint signed names COUNT"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT 1.5"
+assert_status 1 "$RUN_STATUS" "source require_uint decimal exits 1"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT ''"
+assert_status 1 "$RUN_STATUS" "source require_uint empty exits 1"
+assert_contains "$RUN_STDERR" "COUNT" "source require_uint empty names COUNT"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT abc"
+assert_status 1 "$RUN_STATUS" "source require_uint abc exits 1"
+assert_not_contains "$RUN_STDERR" "abc" \
+  "source require_uint abc does not echo VALUE"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_uint COUNT"
+assert_status 64 "$RUN_STATUS" "source require_uint missing arg exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::require_uint" \
+  "source require_uint missing arg prints usage"
+
 finish_tests
