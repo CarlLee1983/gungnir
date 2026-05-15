@@ -213,6 +213,23 @@ ci::require_dir() {
   return 1
 }
 
+# @description Require VALUE to match the Bash extended regex REGEX. Reports NAME and rule, never VALUE.
+ci::require_match() {
+  if [[ $# -lt 3 ]]; then
+    ci::error "Usage: ci::require_match NAME VALUE REGEX [DESCRIPTION]"
+    return 64
+  fi
+  local name="$1"
+  local value="$2"
+  local regex="$3"
+  local description="${4:-$regex}"
+  if [[ "$value" =~ $regex ]]; then
+    return 0
+  fi
+  ci::error "invalid $name (expected $description)"
+  return 1
+}
+
 # @description Return 0 iff ACTUAL string-equals EXPECTED. Never prints values.
 ci::eq() {
   if [[ $# -lt 2 ]]; then

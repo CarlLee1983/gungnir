@@ -85,4 +85,37 @@ assert_status 64 "$RUN_STATUS" "source require_dir missing args exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::require_dir" \
   "source require_dir missing args prints usage"
 
+# -- Source mode: ci::require_match (spec §5.3, §8.1, §10) ---------------
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match DEPLOY_USER arcade '^[A-Za-z0-9._-]+$'"
+assert_status 0 "$RUN_STATUS" "source require_match valid exits 0"
+assert_eq "" "$RUN_STDOUT" "source require_match valid writes no stdout"
+assert_eq "" "$RUN_STDERR" "source require_match valid writes no stderr"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match DEPLOY_USER 'SECRET LEAK CANARY' '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'"
+assert_status 1 "$RUN_STATUS" "source require_match invalid exits 1"
+assert_contains "$RUN_STDERR" "DEPLOY_USER" \
+  "source require_match invalid names DEPLOY_USER"
+assert_contains "$RUN_STDERR" "[A-Za-z0-9._-]+" \
+  "source require_match invalid prints description"
+assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
+  "source require_match invalid does not echo VALUE"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match DEPLOY_USER 'SECRET LEAK CANARY' '^[A-Za-z0-9._-]+$'"
+assert_status 1 "$RUN_STATUS" "source require_match invalid (no desc) exits 1"
+assert_contains "$RUN_STDERR" "DEPLOY_USER" \
+  "source require_match invalid (no desc) names DEPLOY_USER"
+assert_contains "$RUN_STDERR" "^[A-Za-z0-9._-]+$" \
+  "source require_match invalid (no desc) prints raw regex as rule"
+assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
+  "source require_match invalid (no desc) does not echo VALUE"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match COUNT '0' '^[0-9]+$'"
+assert_status 0 "$RUN_STATUS" "source require_match numeric valid exits 0"
+
+run_capture bash -c "source '$ROOT_DIR/ci-toolkit'; ci::require_match NAME value"
+assert_status 64 "$RUN_STATUS" "source require_match missing regex exits 64"
+assert_contains "$RUN_STDERR" "Usage: ci::require_match" \
+  "source require_match missing regex prints usage"
+
 finish_tests
