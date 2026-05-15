@@ -501,6 +501,11 @@ Usage:
   ci-toolkit ne ACTUAL EXPECTED
   ci-toolkit in VALUE CANDIDATE...
   ci-toolkit not-in VALUE CANDIDATE...
+  ci-toolkit file require NAME PATH [HINT]
+  ci-toolkit dir require NAME PATH [HINT]
+  ci-toolkit match require NAME VALUE REGEX [DESCRIPTION]
+  ci-toolkit uint require NAME VALUE
+  ci-toolkit shell join ARG...
   ci-toolkit strip-prefix PREFIX STRING
   ci-toolkit trap-err
   ci-toolkit tool require TOOL_NAME
@@ -711,6 +716,101 @@ ci::cmd_not_in() {
   ci::not_in "$@"
 }
 
+ci::cmd_file() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      if [[ $# -lt 2 ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      ci::require_file "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_dir() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      if [[ $# -lt 2 ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      ci::require_dir "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_match() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      if [[ $# -lt 3 ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      ci::require_match "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_uint() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    require)
+      if [[ $# -lt 2 ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      ci::require_uint "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
+ci::cmd_shell() {
+  local subcommand="${1:-}"
+  shift || true
+
+  case "$subcommand" in
+    join)
+      if [[ $# -lt 1 ]]; then
+        ci::usage >&2
+        return 64
+      fi
+      ci::shell_join "$@"
+      ;;
+    *)
+      ci::usage >&2
+      return 64
+      ;;
+  esac
+}
+
 ci::cmd_strip_prefix() {
   if [[ $# -lt 2 ]]; then
     ci::usage >&2
@@ -769,6 +869,21 @@ ci::dispatch() {
       ;;
     not-in)
       ci::cmd_not_in "$@"
+      ;;
+    file)
+      ci::cmd_file "$@"
+      ;;
+    dir)
+      ci::cmd_dir "$@"
+      ;;
+    match)
+      ci::cmd_match "$@"
+      ;;
+    uint)
+      ci::cmd_uint "$@"
+      ;;
+    shell)
+      ci::cmd_shell "$@"
       ;;
     strip-prefix)
       ci::cmd_strip_prefix "$@"

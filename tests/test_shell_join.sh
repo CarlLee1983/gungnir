@@ -84,4 +84,21 @@ assert_status 64 "$RUN_STATUS" "source shell_join no args exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::shell_join" \
   "source shell_join no args prints usage"
 
+# -- CLI mode (spec §8.3) -------------------------------------------------
+
+run_capture "$ROOT_DIR/ci-toolkit" shell join ssh -p 22 host
+assert_status 0 "$RUN_STATUS" "CLI shell join simple exits 0"
+assert_contains "$RUN_STDOUT" "ssh" "CLI shell join contains ssh"
+assert_contains "$RUN_STDOUT" "22" "CLI shell join contains 22"
+assert_contains "$RUN_STDOUT" "host" "CLI shell join contains host"
+
+# CLI round-trip with spaces
+joined_cli=$("$ROOT_DIR/ci-toolkit" shell join 'hello world' two)
+reparsed_cli="$(reparse_joined "$joined_cli")"
+expected_cli=$'2\nhello world\ntwo'
+assert_eq "$expected_cli" "$reparsed_cli" "CLI shell join spaces round-trips"
+
+run_capture "$ROOT_DIR/ci-toolkit" shell join
+assert_status 64 "$RUN_STATUS" "CLI shell join no args exits 64"
+
 finish_tests

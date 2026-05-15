@@ -158,4 +158,45 @@ assert_status 64 "$RUN_STATUS" "source require_uint missing arg exits 64"
 assert_contains "$RUN_STDERR" "Usage: ci::require_uint" \
   "source require_uint missing arg prints usage"
 
+# -- CLI mode (spec §8.3) -------------------------------------------------
+
+run_capture "$ROOT_DIR/ci-toolkit" file require CONFIG "$EXISTING_FILE"
+assert_status 0 "$RUN_STATUS" "CLI file require present exits 0"
+assert_eq "" "$RUN_STDOUT" "CLI file require present writes no stdout"
+assert_eq "" "$RUN_STDERR" "CLI file require present writes no stderr"
+
+run_capture "$ROOT_DIR/ci-toolkit" file require CONFIG "$MISSING_FILE"
+assert_status 1 "$RUN_STATUS" "CLI file require missing exits 1"
+assert_contains "$RUN_STDERR" "CONFIG" "CLI file require missing names CONFIG"
+
+run_capture "$ROOT_DIR/ci-toolkit" file require
+assert_status 64 "$RUN_STATUS" "CLI file require missing args exits 64"
+
+run_capture "$ROOT_DIR/ci-toolkit" dir require STAGING "$EXISTING_DIR"
+assert_status 0 "$RUN_STATUS" "CLI dir require present exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" dir require STAGING "$MISSING_DIR"
+assert_status 1 "$RUN_STATUS" "CLI dir require missing exits 1"
+assert_contains "$RUN_STDERR" "STAGING" "CLI dir require missing names STAGING"
+
+run_capture "$ROOT_DIR/ci-toolkit" match require DEPLOY_USER arcade '^[A-Za-z0-9._-]+$'
+assert_status 0 "$RUN_STATUS" "CLI match require valid exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" match require DEPLOY_USER 'SECRET LEAK CANARY' '^[A-Za-z0-9._-]+$' '[A-Za-z0-9._-]+'
+assert_status 1 "$RUN_STATUS" "CLI match require invalid exits 1"
+assert_contains "$RUN_STDERR" "DEPLOY_USER" "CLI match require invalid names DEPLOY_USER"
+assert_contains "$RUN_STDERR" "[A-Za-z0-9._-]+" "CLI match require invalid prints description"
+assert_not_contains "$RUN_STDERR" "SECRET LEAK CANARY" \
+  "CLI match require invalid does not echo VALUE"
+
+run_capture "$ROOT_DIR/ci-toolkit" uint require COUNT 5
+assert_status 0 "$RUN_STATUS" "CLI uint require 5 exits 0"
+
+run_capture "$ROOT_DIR/ci-toolkit" uint require COUNT -1
+assert_status 1 "$RUN_STATUS" "CLI uint require -1 exits 1"
+assert_contains "$RUN_STDERR" "COUNT" "CLI uint require -1 names COUNT"
+
+run_capture "$ROOT_DIR/ci-toolkit" uint require
+assert_status 64 "$RUN_STATUS" "CLI uint require missing args exits 64"
+
 finish_tests
